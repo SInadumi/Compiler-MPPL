@@ -67,6 +67,16 @@ extern struct KEY {
 	int keytoken;
 }key[KEYWORDSIZE];
 
+/* string of each token */
+const char *tokenstr[NUMOFTOKEN+1] = {
+	"",
+	"NAME", "program", "var", "array", "of", "begin", "end", "if", "then",
+	 "else", "procedure", "return", "call", "while", "do", "not", "or", 
+	"div", "and", "char", "integer", "boolean", "readln", "writeln", "true",
+	 "false", "NUMBER", "STRING", "+", "-", "*", "=", "<>", "<", "<=", ">", 
+	">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read","write", "break"
+};
+
 /* utilities */
 extern void error(char *mes);
 
