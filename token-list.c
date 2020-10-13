@@ -1,42 +1,18 @@
 ﻿#include "token-list.h"
 
-/* keyword list */
-struct KEY key[KEYWORDSIZE] = {
-	{"and", 	TAND	},
-	{"array",	TARRAY	},
-	{"begin",	TBEGIN	},
-	{"boolean",	TBOOLEAN},
-	{"break",	TBREAK  },
-	{"call",	TCALL	},
-	{"char",	TCHAR	},
-	{"div",		TDIV	},
-	{"do",		TDO	},
-	{"else",	TELSE	},
-	{"end",		TEND	},
-	{"false",	TFALSE	},
-	{"if",		TIF	},
-	{"integer",	TINTEGER},
-	{"not",		TNOT	},
-	{"of",		TOF	},
-	{"or",		TOR	},
-	{"procedure", TPROCEDURE},
-	{"program",	TPROGRAM},
-	{"read",	TREAD	},
-	{"readln",	TREADLN },
-	{"return", 	TRETURN },
-	{"then",	TTHEN	},
-	{"true",	TTRUE	},
-	{"var",		TVAR	},
-	{"while",	TWHILE	},
-	{"write",	TWRITE  },
-	{"writeln",	TWRITELN}
+/* string of each token */
+const char *tokenstr[NUMOFTOKEN+1] = {
+	"",
+	"NAME", "program", "var", "array", "of", "begin", "end", "if", "then",
+	 "else", "procedure", "return", "call", "while", "do", "not", "or", 
+	"div", "and", "char", "integer", "boolean", "readln", "writeln", "true",
+	 "false", "NUMBER", "STRING", "+", "-", "*", "=", "<>", "<", "<=", ">", 
+	">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read","write", "break"
 };
-
-/* Token counter */
-static int numtoken[NUMOFTOKEN+1];
 
 int main(int nc, char *np[]) {
 	int token;
+	int numtoken[NUMOFTOKEN+1];		/* Token counter */
 
 	/* File Open */
     if(nc < 2) {
@@ -49,15 +25,14 @@ int main(int nc, char *np[]) {
     }
 
 	/* Initialized array */
-	for(int i = 0; i < NUMOFTOKEN; i++) numtoken[i] = 0;
-
+	for(int i = 0; i <= NUMOFTOKEN; ++i) numtoken[i] = 0;
     while((token = scan()) >= 0) {
 		numtoken[token]++;
 		/*if(token == TNAME)*/
     }
 	
     end_scan();
-
+	//printf("%d",get_linenum());
     /* Print */
 	for(int i = 0; i <= NUMOFTOKEN; i++){
 		if(numtoken[i] == 0) continue;

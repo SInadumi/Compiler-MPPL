@@ -10,19 +10,19 @@
 #define	TPROGRAM	2	/* program : Keyword */
 #define	TVAR		3	/* var : Keyword */
 #define	TARRAY		4	/* array : Keyword */
-#define	TOF		5	/* of : Keyword */
+#define	TOF			5	/* of : Keyword */
 #define	TBEGIN		6	/* begin : Keyword */
 #define	TEND		7  	/* end : Keyword */
-#define	TIF		8  	/* if : Keyword */
+#define	TIF			8  	/* if : Keyword */
 #define	TTHEN		9	/* then : Keyword */
 #define	TELSE		10	/* else : Keyword */
 #define	TPROCEDURE	11	/* procedure : Keyword */
 #define	TRETURN		12	/* return : Keyword */
 #define	TCALL		13	/* call : Keyword */
 #define	TWHILE		14	/* while : Keyword */
-#define	TDO		15 	/* do : Keyword */
+#define	TDO			15 	/* do : Keyword */
 #define	TNOT		16	/* not : Keyword */
-#define	TOR		17	/* or : Keyword */
+#define	TOR			17	/* or : Keyword */
 #define	TDIV		18 	/* div : Keyword */
 #define	TAND		19 	/* and : Keyword */
 #define	TCHAR		20	/* char : Keyword */
@@ -39,9 +39,9 @@
 #define	TSTAR		31 	/* * : symbol */
 #define	TEQUAL		32 	/* = : symbol */
 #define	TNOTEQ		33 	/* <> : symbol */
-#define	TLE		34 	/* < : symbol */
+#define	TLE			34 	/* < : symbol */
 #define	TLEEQ		35 	/* <= : symbol */
-#define	TGR		36	/* > : symbol */
+#define	TGR			36	/* > : symbol */
 #define	TGREQ		37	/* >= : symbol */
 #define	TLPAREN		38 	/* ( : symbol */
 #define	TRPAREN		39 	/* ) : symbol */
@@ -66,16 +66,6 @@ extern struct KEY {
 	char * keyword;
 	int keytoken;
 }key[KEYWORDSIZE];
-
-/* string of each token */
-const char *tokenstr[NUMOFTOKEN+1] = {
-	"",
-	"NAME", "program", "var", "array", "of", "begin", "end", "if", "then",
-	 "else", "procedure", "return", "call", "while", "do", "not", "or", 
-	"div", "and", "char", "integer", "boolean", "readln", "writeln", "true",
-	 "false", "NUMBER", "STRING", "+", "-", "*", "=", "<>", "<", "<=", ">", 
-	">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read","write", "break"
-};
 
 /* utilities */
 extern void error(char *mes);
