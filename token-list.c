@@ -16,11 +16,14 @@ int main(int nc, char *np[]) {
 
 	/* File Open */
     if(nc < 2) {
-		printf("File name id not given.\n");
+		sprintf(Error_msg, "File name is not given.\n");
+		error(Error_msg);
 		return 0;
+		printf("HI");
     }
     if(init_scan(np[1]) < 0) {
-		printf("File %s can not open.\n", np[1]);
+		sprintf(Error_msg, "File %s can not open.\n", np[1]);
+		error(Error_msg);
 		return 0;
     }
 
@@ -44,6 +47,5 @@ int main(int nc, char *np[]) {
 }
 
 void error(char *mes) {
-	printf("\n ERROR: %s\n", mes);
-	end_scan();
+	printf("\n ERROR:%s\n", mes);
 }

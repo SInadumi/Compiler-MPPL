@@ -1,9 +1,11 @@
 #include "token-list.h"
 
-//static int Check_keyword(char *word);
+/*static int Check_keyword(char *word);
+static void Skip_Element(char *element);*/
 static char Skip_Comment(char skip_character);
 static int row_num = 1;
 FILE *fp;
+static char next_buf;  //先読み文字
 
 /* keyword list */
 struct KEY key[KEYWORDSIZE] = {
@@ -45,7 +47,8 @@ struct KEY key[KEYWORDSIZE] = {
 int init_scan(char *filename){
     fp = fopen(filename, "r");
     if(fp == NULL) return -1;
-    else return 0;
+    next_buf = fgetc(fp);
+    return 0;
 }
 
 /*
@@ -57,17 +60,14 @@ int init_scan(char *filename){
 */
 int scan(){
     char prev_buf;  //現在の文字
-    char next_buf;  //先読み文字
-    char word[MAXSTRSIZE];
-    int word_length = 0;
     int token_code = 0;
 
-    prev_buf = fgetc(fp);
+    prev_buf = next_buf;
 
     while(!token_code){
+        
         if(!prev_buf) return -1;
         next_buf = fgetc(fp);
-        word[word_length++] = prev_buf;
 
         switch (prev_buf){
         case '<':
@@ -88,6 +88,7 @@ int scan(){
             break;
         case ':':
             token_code = TCOLON;
+            // token_codeの上書き
             if(next_buf == '='){
                 next_buf = fgetc(fp);
                 token_code = TASSIGN;
@@ -133,7 +134,8 @@ int scan(){
             break;
         case '{':
         case '/':
-            next_buf = Skip_Comment(next_buf);
+            next_buf = Skip_Comment(prev_buf);
+            if(next_buf < 0) token_code = -1;
             break;
         case '\n':
             row_num++;
@@ -144,11 +146,22 @@ int scan(){
             if(next_buf == '\n') next_buf = fgetc(fp);
             break;
 
-        default:
-            /* 文字列要素の場合 */
+        // 文字列要素の場合
+        //case '"':
 
+        default:
+            /* 名前・キーワードの場合 */
+            if((int)prev_buf >= (int)'A' && (int)prev_buf <= (int)'z'){
+                
+            }
+            /* 数字要素の場合 */
+            if((int)prev_buf >= (int)'0' && (int)prev_buf <= (int)'9'){
+                //Skip_Element(prev_buf);
+                return TNUMBER;
+            }
             /* return Error Code */
-            //error(strcat((char*)cbuf, "is undefined."));
+            sprintf(Error_msg, "line:%d [%c] is undefined.\n",row_num, prev_buf);
+            error(Error_msg);
             token_code = -1;
             break;
         }
@@ -157,21 +170,28 @@ int scan(){
     return token_code;
 }
 
-/*
-static int Check_keyword(char *word){
+
+/*static int Check_keyword(char *word){
     return 1;
 }
-*/
-static char Skip_Comment(char skip_character){
+static void Skip_Element(char *element){
+    
+}*/
 
-    while(skip_character){
+static char Skip_Comment(char skip_character){
+    char init_character = skip_character;
+    skip_character = next_buf;
+
+    while(!feof(fp)){
         if(skip_character == '/' || skip_character == '}'){
             skip_character = fgetc(fp);
             return skip_character;
         }
         skip_character = fgetc(fp);
     }
-
+    
+    sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", row_num, init_character);
+    error(Error_msg);
     return -1;
 }
 

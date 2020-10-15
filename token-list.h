@@ -68,6 +68,7 @@ extern struct KEY {
 }key[KEYWORDSIZE];
 
 /* utilities */
+static char Error_msg [MAXSTRSIZE];
 extern void error(char *mes);
 
 /* scan.c */
