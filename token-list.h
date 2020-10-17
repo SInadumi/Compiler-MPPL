@@ -4,6 +4,7 @@
 #include <string.h>
 
 #define MAXSTRSIZE 1024
+#define MAXNUMSIZE 32767
 
 /* Token */
 #define	TNAME		1	/* Name : Alphabet { Alphabet | Digit } */
@@ -68,11 +69,11 @@ extern struct KEY {
 }key[KEYWORDSIZE];
 
 /* utilities */
-static char Error_msg [MAXSTRSIZE];
+char Error_msg [MAXSTRSIZE];
 extern void error(char *mes);
 
 /* scan.c */
-extern int num_attr;
+int num_attr;
 extern char string_attr[MAXSTRSIZE];
 extern int init_scan(char *filename);
 extern int scan(void);

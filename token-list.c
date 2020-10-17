@@ -9,6 +9,7 @@ const char *tokenstr[NUMOFTOKEN+1] = {
 	 "false", "NUMBER", "STRING", "+", "-", "*", "=", "<>", "<", "<=", ">", 
 	">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read","write", "break"
 };
+char Error_msg[MAXSTRSIZE];
 
 int main(int nc, char *np[]) {
 	int token;

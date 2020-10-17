@@ -1,10 +1,18 @@
 #include "token-list.h"
 
-/*static int Check_keyword(char *word);
-static void Skip_Element(char *element);*/
+/* public */
+int init_scan(char *filename);
+int scan(void);
+int get_linenum(void);
+void end_scan(void);
+int num_attr;
+
+/* private */
+//static int Check_keyword(char *word);
+static int Skip_Digits(char attr_element);
 static char Skip_Comment(char skip_character);
-static int row_num = 1;
 FILE *fp;
+static int row_num = 1;
 static char next_buf;  //先読み文字
 
 /* keyword list */
@@ -65,11 +73,14 @@ int scan(){
     prev_buf = next_buf;
 
     while(!token_code){
-        
-        if(!prev_buf) return -1;
-        next_buf = fgetc(fp);
 
+        prev_buf = next_buf;
+        next_buf = fgetc(fp);
+        if(prev_buf == EOF) return -1;
+        
         switch (prev_buf){
+        
+        // symbol
         case '<':
             token_code = TLE;
             // token_codeの上書き
@@ -133,10 +144,6 @@ int scan(){
         case '\t':
             break;
         case '{':
-        case '/':
-            next_buf = Skip_Comment(prev_buf);
-            if(next_buf < 0) token_code = -1;
-            break;
         case '\n':
             row_num++;
             if(next_buf == '\r') next_buf = fgetc(fp);
@@ -146,26 +153,35 @@ int scan(){
             if(next_buf == '\n') next_buf = fgetc(fp);
             break;
 
-        // 文字列要素の場合
-        //case '"':
+        /* comment */
+        case '/':
+            next_buf = Skip_Comment(prev_buf);
+            if(next_buf < 0) token_code = -1;
+            break;
+
+        // string
+        case (char)39:  
+            
+            break;
 
         default:
-            /* 名前・キーワードの場合 */
+            /* name or keyword */
             if((int)prev_buf >= (int)'A' && (int)prev_buf <= (int)'z'){
                 
             }
-            /* 数字要素の場合 */
+
+            /* digit */
             if((int)prev_buf >= (int)'0' && (int)prev_buf <= (int)'9'){
-                //Skip_Element(prev_buf);
-                return TNUMBER;
+                token_code = Skip_Digits(prev_buf);
+                break;
             }
+
             /* return Error Code */
             sprintf(Error_msg, "line:%d [%c] is undefined.\n",row_num, prev_buf);
             error(Error_msg);
             token_code = -1;
             break;
         }
-        prev_buf = next_buf;
     }
     return token_code;
 }
@@ -173,16 +189,47 @@ int scan(){
 
 /*static int Check_keyword(char *word){
     return 1;
-}
-static void Skip_Element(char *element){
-    
 }*/
 
+/* Skip element of string */
+
+/*
+    Skip element of attr
+    Success:    TNUMBER
+    Error:      -1
+*/
+static int Skip_Digits(char attr_element){
+    char words [MAXSTRSIZE];
+    int total_attr_element = 0;
+
+    /* digit */
+    while((int)attr_element >= (int)'0' && (int)attr_element <= (int)'9'){
+        if(total_attr_element >= MAXSTRSIZE) break;
+        words[total_attr_element++] = attr_element;
+        attr_element = fgetc(fp);
+    }
+
+    /* num_attr */
+    next_buf = attr_element;
+    num_attr = atoi(words);
+    if(num_attr > MAXNUMSIZE){
+        sprintf(Error_msg, "line:%d unsigned integer[%d] is too long(until 32767)", row_num, num_attr);
+        error(Error_msg);
+        return -1;
+    }
+    return TNUMBER;
+}
+
+/*
+    Skip contents into comment
+    Success:    return next character
+    Error:      return -1
+*/
 static char Skip_Comment(char skip_character){
     char init_character = skip_character;
     skip_character = next_buf;
 
-    while(!feof(fp)){
+    while(skip_character != EOF){
         if(skip_character == '/' || skip_character == '}'){
             skip_character = fgetc(fp);
             return skip_character;
