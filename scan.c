@@ -14,7 +14,7 @@ static int Skip_Keyword(char element);
 static int Check_Keyword(char *elements);
 static int Skip_Digits(char attr_element);
 static int Skip_String(char string_element);
-static char Skip_Comment(char skip_character);
+static int Skip_Comment(char skip_character);
 static void Reset_val();
 FILE *fp;
 static int row_num = 1;
@@ -148,7 +148,6 @@ int scan(){
         case ' ':
         case '\t':
             break;
-        case '{':
         case '\n':
             row_num++;
             if(next_buf == '\r') next_buf = fgetc(fp);
@@ -159,9 +158,9 @@ int scan(){
             break;
 
         /* comment */
+        case '{':
         case '/':
-            next_buf = Skip_Comment(prev_buf);
-            if(next_buf < 0) token_code = -1;
+            token_code = Skip_Comment(prev_buf);
             break;
 
         // string
@@ -183,7 +182,7 @@ int scan(){
             }
 
             /* return Error Code */
-            sprintf(Error_msg, "line:%d [%c] is undefined.\n",row_num, prev_buf);
+            sprintf(Error_msg, "line:%d [%c] is undefined.\n", get_linenum(), prev_buf);
             error(Error_msg);
             token_code = -1;
             break;
@@ -200,22 +199,39 @@ int scan(){
 static int Skip_Keyword(char element){
     int token = TNAME;
     int total_word_element = 0;
-    while((int)element >= (int)'A' && (int)element <= (int)'z' 
-       || (int)element >= (int)'0' && (int)element <= (int)'9'){
-        
+    string_attr[total_word_element++] = element;
+    element = next_buf;
+
+    // アルファベットの入力
+    while((int)element >= (int)'A' && (int)element <= (int)'z'){
+
+        if(total_word_element >= MAXSTRSIZE) break;
+
         string_attr[total_word_element++] = element;
         string_length++;
-        element = next_buf;
-        next_buf = fgetc(fp);
-        
-        // エラー処理
-        if(total_word_element >= MAXSTRSIZE){
-            sprintf(Error_msg, "line:%d too long element\n[%s]", row_num, string_attr);
-            error(Error_msg);
-            return -1;
-        }
+        element = fgetc(fp);
+    
     }
+    // 数字列の入力
+    while((int)element >= (int)'0' && (int)element <= (int)'9'){
+        
+        if(total_word_element >= MAXSTRSIZE) break;
+
+        string_attr[total_word_element++] = element;
+        string_length++;
+        element = fgetc(fp);
+
+    }
+
+    // エラー処理
+    if(total_word_element >= MAXSTRSIZE){
+        sprintf(Error_msg, "line:%d too long element\n[%s]", get_linenum(), string_attr);
+        error(Error_msg);
+        return -1;
+    }
+
     token = Check_Keyword(string_attr);
+    next_buf = element;
     return token;
 }
 /*
@@ -224,7 +240,6 @@ static int Skip_Keyword(char element){
     Error:          -1
 */
 static int Check_Keyword(char* elements){
-    printf("%s\n",elements);
     for(int i = 0; i < KEYWORDSIZE; i++){
         if(strcmp(key[i].keyword, elements) == 0){
             return key[i].keytoken;
@@ -246,11 +261,13 @@ static int Skip_String(char string_element){
     while(string_element != EOF){
         string_element = next_buf;
         next_buf = fgetc(fp);
+
         /* 改行コードの扱い */
         if(string_element == '\r' || string_element == '\n') continue;
+        
         /* 文字列が長すぎる場合のエラー判定 */
         if(total_string_element >= MAXSTRSIZE){
-            sprintf(Error_msg, "line:%d too long element\n[%s]", row_num, string_attr);
+            sprintf(Error_msg, "line:%d too long element\n[%s]", get_linenum(), string_attr);
             error(Error_msg);
             return -1;
         }
@@ -261,10 +278,11 @@ static int Skip_String(char string_element){
             string_element = next_buf;
             next_buf = fgetc(fp);
         }
+
         string_attr[total_string_element++] = string_element;
         string_length++;
     }
-    sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", row_num, init_character);
+    sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", get_linenum(), init_character);
     error(Error_msg);
     return -1;
     
@@ -276,6 +294,8 @@ static int Skip_String(char string_element){
 */
 static int Skip_Digits(char attr_element){
     int total_attr_element = 0;
+    string_attr[total_attr_element++] = attr_element;
+    attr_element = next_buf;
 
     /* 数字列の読み込み */
     while((int)attr_element >= (int)'0' && (int)attr_element <= (int)'9'){
@@ -284,38 +304,42 @@ static int Skip_Digits(char attr_element){
         attr_element = fgetc(fp);
     }
 
-    /* num_attr */
-    next_buf = attr_element;
+    /* num_attrの更新 */
     num_attr = atoi(string_attr);
     if(num_attr > MAXNUMSIZE){
-        sprintf(Error_msg, "line:%d unsigned integer[%d] is too long(until 32767)", row_num, num_attr);
+        sprintf(Error_msg, "line:%d unsigned integer[%d] is too long(until 32767)", get_linenum(), num_attr);
         error(Error_msg);
         return -1;
     }
+
+    next_buf = attr_element;
     return TNUMBER;
 }
 
 /*
     Skip contents into comment
-    Success:    return next character
+    Success:    return 0
     Error:      return -1
 */
-static char Skip_Comment(char skip_character){
+static int Skip_Comment(char skip_character){
     char init_character = skip_character;
     skip_character = next_buf;
 
     while(skip_character != EOF){
+        skip_character = next_buf;
+        next_buf = fgetc(fp);
         if(skip_character == '/' || skip_character == '}'){
-            skip_character = fgetc(fp);
-            return skip_character;
+            return 0;
         }
-        skip_character = fgetc(fp);
     }
     
-    sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", row_num, init_character);
+    sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", get_linenum(), init_character);
     error(Error_msg);
     return -1;
 }
+/*
+    Reset num_attr, string_attr, string_length
+*/
 static void Reset_val(){
     num_attr = 0;
     memset(string_attr, '\0', MAXSTRSIZE);
