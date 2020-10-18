@@ -34,7 +34,6 @@ int main(int nc, char *np[]) {
 		numtoken[token]++;
 		/*if(token == TNAME)*/
     }
-	
     end_scan();
 	//printf("%d",get_linenum());
     /* Print */

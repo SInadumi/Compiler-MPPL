@@ -73,8 +73,9 @@ char Error_msg [MAXSTRSIZE];
 extern void error(char *mes);
 
 /* scan.c */
-int num_attr;
+extern int num_attr;
 extern char string_attr[MAXSTRSIZE];
+extern int string_length;
 extern int init_scan(char *filename);
 extern int scan(void);
 extern int get_linenum(void);
