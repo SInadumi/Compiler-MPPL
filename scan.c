@@ -10,10 +10,12 @@ char string_attr[MAXSTRSIZE];
 int string_length;
 
 /* private */
-static int Check_Keyword(char element);
+static int Skip_Keyword(char element);
+static int Check_Keyword(char *elements);
 static int Skip_Digits(char attr_element);
 static int Skip_String(char string_element);
 static char Skip_Comment(char skip_character);
+static void Reset_val();
 FILE *fp;
 static int row_num = 1;
 static char next_buf;  //先読み文字
@@ -72,7 +74,7 @@ int init_scan(char *filename){
 int scan(){
     char prev_buf;  //現在の文字
     int token_code = 0;
-
+    Reset_val();
     prev_buf = next_buf;
 
     while(!token_code){
@@ -170,7 +172,8 @@ int scan(){
         default:
             /* name or keyword */
             if((int)prev_buf >= (int)'A' && (int)prev_buf <= (int)'z'){
-                token_code = Check_Keyword(prev_buf);
+                token_code = Skip_Keyword(prev_buf);
+                break;
             }
 
             /* digit */
@@ -189,12 +192,46 @@ int scan(){
     return token_code;
 }
 
-
-static int Check_Keyword(char element){
-    return 1;
+/*
+    Skip element of keyword or name
+    Success:    keyword's token code or TNAME
+    Error:      -1
+*/
+static int Skip_Keyword(char element){
+    int token = TNAME;
+    int total_word_element = 0;
+    while((int)element >= (int)'A' && (int)element <= (int)'z' 
+       || (int)element >= (int)'0' && (int)element <= (int)'9'){
+        
+        string_attr[total_word_element++] = element;
+        string_length++;
+        element = next_buf;
+        next_buf = fgetc(fp);
+        
+        // エラー処理
+        if(total_word_element >= MAXSTRSIZE){
+            sprintf(Error_msg, "line:%d too long element\n[%s]", row_num, string_attr);
+            error(Error_msg);
+            return -1;
+        }
+    }
+    token = Check_Keyword(string_attr);
+    return token;
 }
-
-// memo:string_attrに入れ込んでないし，エラー処理してない
+/*
+    Check element of keyword or name
+    Success:        keyword's token code
+    Error:          -1
+*/
+static int Check_Keyword(char* elements){
+    printf("%s\n",elements);
+    for(int i = 0; i < KEYWORDSIZE; i++){
+        if(strcmp(key[i].keyword, elements) == 0){
+            return key[i].keytoken;
+        }
+    }
+    return TNAME;
+}
 
 /* 
     Skip element of string
@@ -213,7 +250,7 @@ static int Skip_String(char string_element){
         if(string_element == '\r' || string_element == '\n') continue;
         /* 文字列が長すぎる場合のエラー判定 */
         if(total_string_element >= MAXSTRSIZE){
-            sprintf(Error_msg, "line:%d [%s] is too long", row_num, string_attr);
+            sprintf(Error_msg, "line:%d too long element\n[%s]", row_num, string_attr);
             error(Error_msg);
             return -1;
         }
@@ -278,6 +315,11 @@ static char Skip_Comment(char skip_character){
     sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", row_num, init_character);
     error(Error_msg);
     return -1;
+}
+static void Reset_val(){
+    num_attr = 0;
+    memset(string_attr, '\0', MAXSTRSIZE);
+    string_length = 0;
 }
 
 /*

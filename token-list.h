@@ -72,6 +72,7 @@ extern struct KEY {
 char Error_msg [MAXSTRSIZE];
 extern void error(char *mes);
 
+
 /* scan.c */
 extern int num_attr;
 extern char string_attr[MAXSTRSIZE];
