@@ -52,11 +52,11 @@ struct KEY key[KEYWORDSIZE] = {
 	{"writeln",	TWRITELN}
 };
 
-/* 
+/*
     Initialize file
     Case : file open error -> return -1
     Case : successed :     -> return 0
- */
+*/
 int init_scan(char *filename){
     fp = fopen(filename, "r");
     if(fp == NULL) return -1;
@@ -80,18 +80,19 @@ int scan(){
     while(!token_code){
 
         prev_buf = next_buf;
+        
         next_buf = fgetc(fp);
         if(prev_buf == EOF) return -1;
         
         switch (prev_buf){
-        
         // symbol
         case '<':
             token_code = TLE;
             // token_codeの上書き
-            if(next_buf == '>' || next_buf == '=') next_buf = fgetc(fp);
             if(next_buf == '>') token_code = TNOTEQ;
             else if(next_buf == '=') token_code = TLEEQ;
+            
+            if(next_buf == '>' || next_buf == '=') next_buf = fgetc(fp);
             break;
 
         case '>':
@@ -158,8 +159,12 @@ int scan(){
             break;
 
         /* comment */
-        case '{':
         case '/':
+            if(next_buf == '*'){
+                token_code = Skip_Comment(prev_buf);
+            }
+            break;
+        case '{':
             token_code = Skip_Comment(prev_buf);
             break;
 
@@ -203,7 +208,8 @@ static int Skip_Keyword(char element){
     element = next_buf;
 
     // アルファベットの入力
-    while((int)element >= (int)'A' && (int)element <= (int)'z'){
+    while((int)element >= (int)'A' && (int)element <= (int)'Z'
+       || (int)element >= (int)'a' && (int)element <= (int)'z' ){
 
         if(total_word_element >= MAXSTRSIZE) break;
 
@@ -212,8 +218,11 @@ static int Skip_Keyword(char element){
         element = fgetc(fp);
     
     }
-    // 数字列の入力
-    while((int)element >= (int)'0' && (int)element <= (int)'9'){
+
+    // アルファベット・数字列の入力
+    while((int)element >= (int)'A' && (int)element <= (int)'Z'
+       || (int)element >= (int)'a' && (int)element <= (int)'z' 
+       || (int)element >= (int)'0' && (int)element <= (int)'9'){
         
         if(total_word_element >= MAXSTRSIZE) break;
 
@@ -222,7 +231,7 @@ static int Skip_Keyword(char element){
         element = fgetc(fp);
 
     }
-
+    printf("%s\n",string_attr);
     // エラー処理
     if(total_word_element >= MAXSTRSIZE){
         sprintf(Error_msg, "line:%d too long element\n[%s]", get_linenum(), string_attr);
@@ -323,12 +332,12 @@ static int Skip_Digits(char attr_element){
 */
 static int Skip_Comment(char skip_character){
     char init_character = skip_character;
-    skip_character = next_buf;
 
     while(skip_character != EOF){
         skip_character = next_buf;
         next_buf = fgetc(fp);
-        if(skip_character == '/' || skip_character == '}'){
+        if((skip_character == '*' && next_buf == '/') || skip_character == '}'){
+            next_buf = fgetc(fp);
             return 0;
         }
     }
