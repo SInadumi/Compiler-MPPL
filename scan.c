@@ -162,6 +162,10 @@ int scan(){
         case '/':
             if(next_buf == '*'){
                 token_code = Skip_Comment(prev_buf);
+            }else{
+                sprintf(Error_msg, "line:%d [%c] is undefined.\n", get_linenum(), prev_buf);
+                error(Error_msg);
+                token_code = -1;
             }
             break;
         case '{':
