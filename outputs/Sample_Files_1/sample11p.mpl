@@ -1,4 +1,4 @@
-"NAME	"	21
+"NAME	"	20
 "program	"	1
 "var	"	3
 "begin	"	5

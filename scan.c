@@ -17,8 +17,8 @@ static int Skip_String(char string_element);
 static int Skip_Comment(char skip_character);
 static void Reset_val();
 FILE *fp;
-static int row_num = 1;
-static char next_buf;  //先読み文字
+static int row_num = 1; /* number of row */
+static char next_buf;   /* Look ahead buffer */
 
 /* keyword list */
 struct KEY key[KEYWORDSIZE] = {
@@ -72,23 +72,23 @@ int init_scan(char *filename){
     Case : EOF or Error            -> return -1
 */
 int scan(){
-    char prev_buf;  //現在の文字
+    char now_buf;
     int token_code = 0;
-    Reset_val();
-    prev_buf = next_buf;
+
+    Reset_val();        // Initialize attr and string_length
+    now_buf = next_buf;
 
     while(!token_code){
 
-        prev_buf = next_buf;
+        now_buf = next_buf;
         
         next_buf = fgetc(fp);
-        if(prev_buf == EOF) return -1;
+        if(now_buf == EOF) return -1;
         
-        switch (prev_buf){
+        switch (now_buf){
         // symbol
         case '<':
             token_code = TLE;
-            // token_codeの上書き
             if(next_buf == '>') token_code = TNOTEQ;
             else if(next_buf == '=') token_code = TLEEQ;
             
@@ -97,7 +97,6 @@ int scan(){
 
         case '>':
             token_code = TGR;
-            // token_codeの上書き
             if(next_buf == '='){
                 next_buf = fgetc(fp);
                 token_code = TGREQ;
@@ -105,7 +104,6 @@ int scan(){
             break;
         case ':':
             token_code = TCOLON;
-            // token_codeの上書き
             if(next_buf == '='){
                 next_buf = fgetc(fp);
                 token_code = TASSIGN;
@@ -158,40 +156,31 @@ int scan(){
             if(next_buf == '\n') next_buf = fgetc(fp);
             break;
 
-        /* comment */
-        case '/':
-            if(next_buf == '*'){
-                token_code = Skip_Comment(prev_buf);
-            }else{
-                sprintf(Error_msg, "line:%d [%c] is undefined.\n", get_linenum(), prev_buf);
-                error(Error_msg);
-                token_code = -1;
-            }
-            break;
-        case '{':
-            token_code = Skip_Comment(prev_buf);
-            break;
-
         // string
         case (char)39:  
-            token_code = Skip_String(prev_buf);
+            token_code = Skip_String(now_buf);
             break;
 
-        default:
+        default:   
+            /* comment */
+            if(now_buf == '/' && next_buf == '*' || now_buf == '{'){
+                token_code = Skip_Comment(now_buf);
+                break;
+            }
             /* name or keyword */
-            if((int)prev_buf >= (int)'A' && (int)prev_buf <= (int)'z'){
-                token_code = Skip_Keyword(prev_buf);
+            if((int)now_buf >= (int)'A' && (int)now_buf <= (int)'z'){
+                token_code = Skip_Keyword(now_buf);
                 break;
             }
 
             /* digit */
-            if((int)prev_buf >= (int)'0' && (int)prev_buf <= (int)'9'){
-                token_code = Skip_Digits(prev_buf);
+            if((int)now_buf >= (int)'0' && (int)now_buf <= (int)'9'){
+                token_code = Skip_Digits(now_buf);
                 break;
             }
 
             /* return Error Code */
-            sprintf(Error_msg, "line:%d [%c] is undefined.\n", get_linenum(), prev_buf);
+            sprintf(Error_msg, "line:%d [%c] is undefined.\n", get_linenum(), now_buf);
             error(Error_msg);
             token_code = -1;
             break;
@@ -211,7 +200,7 @@ static int Skip_Keyword(char element){
     string_attr[total_word_element++] = element;
     element = next_buf;
 
-    // アルファベットの入力
+    /* Input Alphabet to string_attr */
     while((int)element >= (int)'A' && (int)element <= (int)'Z'
        || (int)element >= (int)'a' && (int)element <= (int)'z' ){
 
@@ -223,7 +212,7 @@ static int Skip_Keyword(char element){
     
     }
 
-    // アルファベット・数字列の入力
+    /* Input Alphabet or Digits to string_attr */
     while((int)element >= (int)'A' && (int)element <= (int)'Z'
        || (int)element >= (int)'a' && (int)element <= (int)'z' 
        || (int)element >= (int)'0' && (int)element <= (int)'9'){
@@ -235,18 +224,20 @@ static int Skip_Keyword(char element){
         element = fgetc(fp);
 
     }
-    printf("%s\n",string_attr);
-    // エラー処理
+    
+    /* Error: Overflow */
     if(total_word_element >= MAXSTRSIZE){
         sprintf(Error_msg, "line:%d too long element\n[%s]", get_linenum(), string_attr);
         error(Error_msg);
         return -1;
     }
 
+    /* Decide token of Keyword or NAME */
     token = Check_Keyword(string_attr);
     next_buf = element;
     return token;
 }
+
 /*
     Check element of keyword or name
     Success:        keyword's token code
@@ -270,21 +261,22 @@ static int Skip_String(char string_element){
     int total_string_element = 0;
     char init_character = string_element;
 
-    /* 文字列の読み込み */
+    /* Input String to string_attr */
     while(string_element != EOF){
         string_element = next_buf;
         next_buf = fgetc(fp);
 
-        /* 改行コードの扱い */
+        /* If Input element is '\r' or '\n' */
         if(string_element == '\r' || string_element == '\n') continue;
         
-        /* 文字列が長すぎる場合のエラー判定 */
+        /* Error: Overflow */
         if(total_string_element >= MAXSTRSIZE){
             sprintf(Error_msg, "line:%d too long element\n[%s]", get_linenum(), string_attr);
             error(Error_msg);
             return -1;
         }
-        /* 終了の判定 */
+
+        /* If Input element is ['] */
         if(string_element == (char)39){
             if(next_buf != (char)39) return TSTRING;
             string_attr[total_string_element++] = string_element;
@@ -295,6 +287,8 @@ static int Skip_String(char string_element){
         string_attr[total_string_element++] = string_element;
         string_length++;
     }
+
+    /* Error: Token hasn't statement at end of ["] */
     sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", get_linenum(), init_character);
     error(Error_msg);
     return -1;
@@ -310,14 +304,14 @@ static int Skip_Digits(char attr_element){
     string_attr[total_attr_element++] = attr_element;
     attr_element = next_buf;
 
-    /* 数字列の読み込み */
+    /* Input Digits to string_attr */
     while((int)attr_element >= (int)'0' && (int)attr_element <= (int)'9'){
         if(total_attr_element >= MAXSTRSIZE) break;
         string_attr[total_attr_element++] = attr_element;
         attr_element = fgetc(fp);
     }
 
-    /* num_attrの更新 */
+    /* Update num_attr */
     num_attr = atoi(string_attr);
     if(num_attr > MAXNUMSIZE){
         sprintf(Error_msg, "line:%d unsigned integer[%d] is too long(until 32767)", get_linenum(), num_attr);

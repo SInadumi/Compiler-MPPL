@@ -1,6 +1,7 @@
-"NAME	"	26
+"NAME	"	28
 "program	"	1
 "var	"	1
+"array	"	1
 "of	"	1
 "begin	"	5
 "end	"	5
@@ -13,13 +14,14 @@
 "writeln	"	1
 "true	"	1
 "false	"	3
-"NUMBER	"	8
+"NUMBER	"	11
 "STRING	"	1
 "+	"	3
 "<	"	4
 "(	"	1
 ")	"	1
-"]	"	3
+"[	"	6
+"]	"	6
 ":=	"	10
 ".	"	1
 ",	"	2

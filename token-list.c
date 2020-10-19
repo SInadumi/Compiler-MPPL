@@ -1,5 +1,6 @@
 ﻿#include "token-list.h"
 
+/* public */
 /* string of each token */
 const char *tokenstr[NUMOFTOKEN+1] = {
 	"",
@@ -9,8 +10,11 @@ const char *tokenstr[NUMOFTOKEN+1] = {
 	 "false", "NUMBER", "STRING", "+", "-", "*", "=", "<>", "<", "<=", ">", 
 	">=", "(", ")", "[", "]", ":=", ".", ",", ":", ";", "read","write", "break"
 };
-char Error_msg[MAXSTRSIZE];
+char Error_msg[MAXSTRSIZE];				
+
+/* private */
 static int numtoken[NUMOFTOKEN+1];		/* Token counter */
+static int name_counter[MAXSTRSIZE];	/* NAME counter */
 static void Print_File(char *name);
 
 int main(int nc, char *np[]) {
@@ -31,10 +35,15 @@ int main(int nc, char *np[]) {
 
 	/* Initialized array */
 	for(int i = 0; i <= NUMOFTOKEN; ++i) numtoken[i] = 0;
+
+	/* Count Token */
     while((token = scan()) >= 0) {
 		numtoken[token]++;
-		/*if(token == TNAME)*/
+		if(token == TNAME){
+			
+		}
     }
+
     end_scan();
 
     /* Print */
