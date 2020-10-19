@@ -21,7 +21,7 @@ static int row_num = 1; /* number of row */
 static char next_buf;   /* Look ahead buffer */
 
 /* keyword list */
-struct KEY key[KEYWORDSIZE] = {
+keywords key[KEYWORDSIZE] = {
 	{"and", 	TAND	},
 	{"array",	TARRAY	},
 	{"begin",	TBEGIN	},
@@ -244,7 +244,8 @@ static int Skip_Keyword(char element){
     Error:          -1
 */
 static int Check_Keyword(char* elements){
-    for(int i = 0; i < KEYWORDSIZE; i++){
+    int i;
+    for(i = 0; i < KEYWORDSIZE; i++){
         if(strcmp(key[i].keyword, elements) == 0){
             return key[i].keytoken;
         }

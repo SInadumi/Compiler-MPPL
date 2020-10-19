@@ -1,5 +1,13 @@
 ﻿#include "token-list.h"
 
+/* public */
+void init_idtab();
+struct ID *search_idtab(char *np);
+void id_countup(char *np);
+void print_idtab();
+void print_idtab_in_File(FILE *file);
+void release_idtab();
+
 struct ID {
 	char *name;
 	int count;
@@ -41,12 +49,21 @@ void id_countup(char *np) {	/* Register and count up the name pointed by np */
 	}
 }
 
-void print_idtab() {	/* Output the registered data */
+void print_idtab(){				/* Output the registered data */
 	struct ID *p;
 
 	for(p = idroot; p != NULL; p = p->nextp) {
 		if(p->count != 0)
 			printf("\t\"Identifier\" \"%s\"\t%d\n", p->name, p->count);
+	}
+}
+
+void print_idtab_in_File(FILE *file) {	/* Output the registered data in file */
+	struct ID *p;
+
+	for(p = idroot; p != NULL; p = p->nextp) {
+		if(p->count != 0)
+			fprintf(file, "\t\"Identifier\" \"%s\"\t%d\n", p->name, p->count);
 	}
 }
 

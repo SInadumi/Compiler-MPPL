@@ -63,15 +63,23 @@
 
 #define KEYWORDSIZE	28
 
-extern struct KEY {
-	char * keyword;
+typedef struct{
+	char *keyword;
 	int keytoken;
-}key[KEYWORDSIZE];
+}keywords;
 
 /* utilities */
 char Error_msg [MAXSTRSIZE];
 extern void error(char *mes);
+extern void warning(char *mes);
 
+/* id-list.c */
+extern void init_idtab();
+extern struct ID *search_idtab(char *np);
+extern void id_countup(char *np);
+extern void print_idtab();
+extern void print_idtab_in_File(FILE *file);
+extern void release_idtab();
 
 /* scan.c */
 extern int num_attr;
