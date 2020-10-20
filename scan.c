@@ -227,7 +227,7 @@ static int Skip_Keyword(char element){
     
     /* Error: Overflow */
     if(total_word_element >= MAXSTRSIZE){
-        sprintf(Error_msg, "line:%d too long element\n[%s]", get_linenum(), string_attr);
+        sprintf(Error_msg, "line:%d too long element\n", get_linenum());
         error(Error_msg);
         return -1;
     }
@@ -272,7 +272,7 @@ static int Skip_String(char string_element){
         
         /* Error: Overflow */
         if(total_string_element >= MAXSTRSIZE){
-            sprintf(Error_msg, "line:%d too long element\n[%s]", get_linenum(), string_attr);
+            sprintf(Error_msg, "line:%d too long element\n", get_linenum());
             error(Error_msg);
             return -1;
         }
@@ -315,7 +315,7 @@ static int Skip_Digits(char attr_element){
     /* Update num_attr */
     num_attr = atoi(string_attr);
     if(num_attr > MAXNUMSIZE){
-        sprintf(Error_msg, "line:%d unsigned integer[%d] is too long(until 32767)", get_linenum(), num_attr);
+        sprintf(Error_msg, "line:%d unsigned integer is too long(until 32767)", get_linenum());
         error(Error_msg);
         return -1;
     }
@@ -335,13 +335,17 @@ static int Skip_Comment(char skip_character){
     while(skip_character != EOF){
         skip_character = next_buf;
         next_buf = fgetc(fp);
-        if((skip_character == '*' && next_buf == '/') || skip_character == '}'){
+        if(skip_character == '*' && next_buf == '/' && init_character == '/'){
+            next_buf = fgetc(fp);
+            return 0;
+        }
+        if(skip_character == '}' && init_character == '{'){
             next_buf = fgetc(fp);
             return 0;
         }
     }
     
-    sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", get_linenum(), init_character);
+    sprintf(Error_msg, "line:%d expected declaration or statement at end of input", get_linenum());
     error(Error_msg);
     return -1;
 }
