@@ -1,22 +1,22 @@
 #include "token-list.h"
 
 /* public */
-int init_scan(char *filename);
-int scan(void);
+int init_scan(char *filename, FILE **fp);
+int scan(FILE *fp);
 int get_linenum(void);
-void end_scan(void);
+void end_scan(FILE *fp);
 int num_attr;
 char string_attr[MAXSTRSIZE];
 int string_length;
 
 /* private */
-static int Skip_Keyword(char element);
+static int Skip_Keyword(char element, FILE *fp);
 static int Check_Keyword(char *elements);
-static int Skip_Digits(char attr_element);
-static int Skip_String(char string_element);
-static int Skip_Comment(char skip_character);
-static void Reset_val();
-FILE *fp;
+static int Skip_Digits(char attr_element, FILE *fp);
+static int Skip_String(char string_element, FILE *fp);
+static int Skip_Comment(char skip_character, FILE *fp);
+static void Reset_val(void);
+
 static int row_num = 1; /* number of row */
 static char next_buf;   /* Look ahead buffer */
 
@@ -57,10 +57,10 @@ keywords key[KEYWORDSIZE] = {
     Case : file open error -> return -1
     Case : successed :     -> return 0
 */
-int init_scan(char *filename){
-    fp = fopen(filename, "r");
+int init_scan(char *filename, FILE **fp){
+    *fp = fopen(filename, "r");
     if(fp == NULL) return -1;
-    next_buf = fgetc(fp);
+    next_buf = fgetc(*fp);
     return 0;
 }
 
@@ -71,7 +71,7 @@ int init_scan(char *filename){
     Case : content is digit string -> return digit string
     Case : EOF or Error            -> return -1
 */
-int scan(){
+int scan(FILE *fp){
     char now_buf;
     int token_code = 0;
 
@@ -158,30 +158,29 @@ int scan(){
 
         // string
         case (char)39:  
-            token_code = Skip_String(now_buf);
+            token_code = Skip_String(now_buf, fp);
             break;
 
         default:   
             /* comment */
             if(now_buf == '/' && next_buf == '*' || now_buf == '{'){
-                token_code = Skip_Comment(now_buf);
+                token_code = Skip_Comment(now_buf, fp);
                 break;
             }
             /* name or keyword */
             if((int)now_buf >= (int)'A' && (int)now_buf <= (int)'z'){
-                token_code = Skip_Keyword(now_buf);
+                token_code = Skip_Keyword(now_buf, fp);
                 break;
             }
 
             /* digit */
             if((int)now_buf >= (int)'0' && (int)now_buf <= (int)'9'){
-                token_code = Skip_Digits(now_buf);
+                token_code = Skip_Digits(now_buf, fp);
                 break;
             }
 
             /* return Error Code */
-            sprintf(Error_msg, "line:%d [%c] is undefined.\n", get_linenum(), now_buf);
-            error(Error_msg);
+            error("undefined character");
             token_code = -1;
             break;
         }
@@ -194,7 +193,7 @@ int scan(){
     Success:    keyword's token code or TNAME
     Error:      -1
 */
-static int Skip_Keyword(char element){
+static int Skip_Keyword(char element, FILE *fp){
     int token = TNAME;
     int total_word_element = 0;
     string_attr[total_word_element++] = element;
@@ -227,8 +226,7 @@ static int Skip_Keyword(char element){
     
     /* Error: Overflow */
     if(total_word_element >= MAXSTRSIZE){
-        sprintf(Error_msg, "line:%d too long element\n", get_linenum());
-        error(Error_msg);
+        error("too long element");
         return -1;
     }
 
@@ -243,11 +241,11 @@ static int Skip_Keyword(char element){
     Success:        keyword's token code
     Error:          -1
 */
-static int Check_Keyword(char* elements){
-    int i;
-    for(i = 0; i < KEYWORDSIZE; i++){
-        if(strcmp(key[i].keyword, elements) == 0){
-            return key[i].keytoken;
+static int Check_Keyword(char *elements){
+    int index;
+    for(index = 0; index < KEYWORDSIZE; index++){
+        if(strcmp(key[index].keyword, elements) == 0){
+            return key[index].keytoken;
         }
     }
     return TNAME;
@@ -258,7 +256,7 @@ static int Check_Keyword(char* elements){
     Success:    TSTRING
     Error:      -1   
 */
-static int Skip_String(char string_element){
+static int Skip_String(char string_element, FILE *fp){
     int total_string_element = 0;
     char init_character = string_element;
 
@@ -272,8 +270,7 @@ static int Skip_String(char string_element){
         
         /* Error: Overflow */
         if(total_string_element >= MAXSTRSIZE){
-            sprintf(Error_msg, "line:%d too long element\n", get_linenum());
-            error(Error_msg);
+            error("too long element");
             return -1;
         }
 
@@ -290,8 +287,7 @@ static int Skip_String(char string_element){
     }
 
     /* Error: Token hasn't statement at end of ["] */
-    sprintf(Error_msg, "line:%d expected declaration or statement at end of input [%c]", get_linenum(), init_character);
-    error(Error_msg);
+    error("expected declaration or statement at end of input");
     return -1;
     
 }
@@ -300,7 +296,7 @@ static int Skip_String(char string_element){
     Success:    TNUMBER
     Error:      -1
 */
-static int Skip_Digits(char attr_element){
+static int Skip_Digits(char attr_element, FILE *fp){
     int total_attr_element = 0;
     string_attr[total_attr_element++] = attr_element;
     attr_element = next_buf;
@@ -315,8 +311,7 @@ static int Skip_Digits(char attr_element){
     /* Update num_attr */
     num_attr = atoi(string_attr);
     if(num_attr > MAXNUMSIZE){
-        sprintf(Error_msg, "line:%d unsigned integer is too long(until 32767)", get_linenum());
-        error(Error_msg);
+        error("unsigned integer is too long(until 32767)");
         return -1;
     }
 
@@ -329,7 +324,7 @@ static int Skip_Digits(char attr_element){
     Success:    return 0
     Error:      return -1
 */
-static int Skip_Comment(char skip_character){
+static int Skip_Comment(char skip_character, FILE *fp){
     char init_character = skip_character;
 
     while(skip_character != EOF){
@@ -344,9 +339,7 @@ static int Skip_Comment(char skip_character){
             return 0;
         }
     }
-    
-    sprintf(Error_msg, "line:%d expected declaration or statement at end of input", get_linenum());
-    error(Error_msg);
+    error("expected declaration or statement at end of input");
     return -1;
 }
 /*
@@ -366,6 +359,6 @@ int get_linenum(){
     return row_num;
 }
 
-void end_scan(){
+void end_scan(FILE *fp){
     fclose(fp);
 }

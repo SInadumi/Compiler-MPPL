@@ -57,8 +57,6 @@
 #define	TWRITE		48	/* write : Keyword */
 #define	TBREAK		49	/* break : Keyword */
 
-#define NUMOFTOKEN	49
-
 /* token-list.c */
 
 #define KEYWORDSIZE	28
@@ -69,9 +67,8 @@ typedef struct{
 }keywords;
 
 /* utilities */
-char Error_msg [MAXSTRSIZE];
-extern void error(char *mes);
-extern void warning(char *mes);
+extern int error(char *mes);
+extern int warning(char *mes);
 
 /* id-list.c */
 extern void init_idtab();
@@ -85,7 +82,7 @@ extern void release_idtab();
 extern int num_attr;
 extern char string_attr[MAXSTRSIZE];
 extern int string_length;
-extern int init_scan(char *filename);
-extern int scan(void);
+extern int init_scan(char *filename, FILE **fp);
+extern int scan(FILE *fp);
 extern int get_linenum(void);
-extern void end_scan(void);
+extern void end_scan(FILE *fp);
