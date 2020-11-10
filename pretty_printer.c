@@ -20,18 +20,19 @@ int Parse_program(FILE *fp){
     token = scan(fp);
     if(token != TPROGRAM) return error("'program' is not found.");
     fprintf(stdout,"%s ", tokenstr[token]);
-
     token = scan(fp);
+
     if(token != TNAME) return error("expect [NAME] behind 'program'");
     fprintf(stdout, "%s ", string_attr);
-
     token = scan(fp);
+    
     if(token != TSEMI) return error("[;] is not found");
     fprintf(stdout, "%s\n", tokenstr[token]);
+    token = scan(fp);
 
     /* Parse(block) */
-    if(!Parse_block(fp)) return ERROR;
-
+    if(Parse_block(fp)) return ERROR;
+ 
     if(token != TDOT) return error("[.] is not found.");
     fprintf(stdout, "%s\n", tokenstr[token]);
 
@@ -42,23 +43,20 @@ int Parse_program(FILE *fp){
 
 int Parse_block(FILE *fp){
 
-    token = scan(fp);
-
     if(token != TVAR && token != TPROCEDURE) return error("'var' or 'procedule' is not found");
 
     /* repeat variable declaration or subproblem declaration */
     while(token == TVAR || token == TPROCEDURE){
-
-        if(token == TVAR && !Parse_variable_declaration(fp)) return ERROR;
+ 
+        if(token == TVAR){ 
+            if(Parse_variable_declaration(fp)) return ERROR;
+        }else if(token == TPROCEDURE){
+             if(Parse_subprogram_declaration(fp)) return ERROR;
+        }else return error("'var' or 'procedure' is not found");
         
-        else if(token == TPROCEDURE && !Parse_subprogram_declaration(fp)) return ERROR;
-        
-        else return error("'var' or 'procedure' is not found");
-            
     }
-
     /* check compound statement */
-    if(!Parse_compound_statement(fp)) return ERROR;
+    if(Parse_compound_statement(fp)) return ERROR;
 
     return NORMAL; 
 }
@@ -69,37 +67,37 @@ memo: 'var'はtokenに先読みされた状態で関数に入る
 int Parse_variable_declaration(FILE *fp){
 
     if(token != TVAR) return error("'var' is not found");
-        
     fprintf(stdout, "%s ", tokenstr[token]);
-    
     token = scan(fp);
+    
     /* Parse(variable names) */
-    if(!Parse_variable_names(fp)) return ERROR;
+    if(Parse_variable_names(fp)) return ERROR;
 
     if(token != TCOLON) return error("[:] is not found");
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
     /* Parse(type) */
-    if(!Parse_type(fp)) return ERROR;
+    if(Parse_type(fp)) return ERROR;
 
     if (token != TSEMI) return error("[;] is not found");
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
-
+  
     while(token == TNAME){
+        
         /* Parse(variable names) */
-        if(!Parse_variable_names(fp)) return ERROR;
+        if(Parse_variable_names(fp)) return ERROR;
 
         if(token != TCOLON) return error("[:] is not found");
         fprintf(stdout, "%s\n", tokenstr[token]);
-        
+        token = scan(fp);
+
         /* Parse(type) */
-        if(!Parse_type(fp)) return ERROR;
+        if(Parse_type(fp)) return ERROR;
 
         if (token != TSEMI) return error("[;] is not found");
         fprintf(stdout, "%s\n", tokenstr[token]);
-
         token = scan(fp);
     }
 
@@ -108,11 +106,11 @@ int Parse_variable_declaration(FILE *fp){
 int Parse_variable_names(FILE *fp){
     
     /* Parse(variable name) */
-    if(!Parse_variable_name(fp)) return ERROR;
+    if(Parse_variable_name(fp)) return ERROR;
 
     while(token == TCOMMA){
         fprintf(stdout, "%s", tokenstr[token]);
-        if(!Parse_variable_name(fp)) return ERROR;
+        if(Parse_variable_name(fp)) return ERROR;
     }
 
     return NORMAL;
@@ -127,8 +125,8 @@ int Parse_variable_name(FILE *fp){
 }
 
 int Parse_type(FILE *fp){
-    if(token == TARRAY && !Parse_array_type(fp)) return ERROR;
-    else if(!Parse_standard_type(fp)) return ERROR;
+    if(token == TARRAY && Parse_array_type(fp)) return ERROR;
+    else if(Parse_standard_type(fp)) return ERROR;
     return NORMAL;
 }
 
@@ -159,7 +157,7 @@ int Parse_array_type(FILE *fp){
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_standard_type(fp)) return ERROR;
+    if(Parse_standard_type(fp)) return ERROR;
 
     return NORMAL;
 }
@@ -173,19 +171,19 @@ int Parse_subprogram_declaration(FILE *fp){
     fprintf(stdout, "%s ", tokenstr[token]);
 
     /* Parse(procedule name) */
-    if(!Parse_procedule_name(fp)) return ERROR;
+    if(Parse_procedule_name(fp)) return ERROR;
 
     /* Parse(formal paramenters) */
-    if(token == TLPAREN && !Parse_formal_parameters(fp)) return ERROR;
+    if(token == TLPAREN && Parse_formal_parameters(fp)) return ERROR;
 
     if (token != TSEMI) return error("[;] is not found");
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
 
-    if(token == TVAR && !Parse_variable_declaration(fp)) return ERROR;
+    if(token == TVAR && Parse_variable_declaration(fp)) return ERROR;
 
     /* Parse(compound statement) */
-    if(!Parse_compound_statement(fp)) return ERROR;    
+    if(Parse_compound_statement(fp)) return ERROR;    
 
     if (token != TSEMI) return error("[;] is not found");
     fprintf(stdout, "%s\n", tokenstr[token]);
@@ -207,26 +205,26 @@ int Parse_formal_parameters(FILE *fp){
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_variable_names(fp)) return ERROR;
+    if(Parse_variable_names(fp)) return ERROR;
 
     if(token != TCOLON) return error("colon is not found in procedule statement");
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_type(fp)) return ERROR;
+    if(Parse_type(fp)) return ERROR;
 
 
     while(token == TSEMI){
         fprintf(stdout, "%s ", tokenstr[token]);
         token = scan(fp);
 
-        if(!Parse_variable_names(fp)) return ERROR;
+        if(Parse_variable_names(fp)) return ERROR;
 
         if(token != TCOLON) return error("colon is not found in procedule statement");
         fprintf(stdout, "%s ", tokenstr[token]);
         token = scan(fp);
 
-        if(!Parse_type(fp)) return ERROR;
+        if(Parse_type(fp)) return ERROR;
 
     }
 
@@ -238,16 +236,17 @@ int Parse_formal_parameters(FILE *fp){
 
 }
 int Parse_compound_statement(FILE *fp){
-    token = scan(fp);
     if(token != TBEGIN) return error("'begin' is not found.");
     fprintf(stdout, "%s\n", tokenstr[token]);
+    token = scan(fp);
 
     /* Parse(statement) */
-    if (!Parse_statement(fp)) return ERROR;
+    if (Parse_statement(fp)) return ERROR;
     
-    while((token = scan(fp)) == TSEMI){
+    while(token == TSEMI){
         fprintf(stdout, "%s\n", tokenstr[token]);
-        if(!Parse_statement(fp)) return ERROR;
+        token = scan(fp);
+        if(Parse_statement(fp)) return ERROR;
     }
 
     if(token != TEND) return error("'end' is not found.");
@@ -258,41 +257,41 @@ int Parse_compound_statement(FILE *fp){
 int Parse_statement(FILE *fp){
     switch(token){
         case TNAME:
-            if(!Parse_assignment_statement(fp)) return ERROR;
+            if(Parse_assignment_statement(fp)) return ERROR;
             break;
 
         case TIF:
-            if(!Parse_condition_statement(fp)) return ERROR;
+            if(Parse_condition_statement(fp)) return ERROR;
             break;
 
         case TWHILE:
-            if(!Parse_iteration_statement(fp)) return ERROR;
+            if(Parse_iteration_statement(fp)) return ERROR;
             break;
 
         case TBREAK:
-            if(!Parse_exit_statement(fp)) return ERROR;
+            if(Parse_exit_statement(fp)) return ERROR;
             break;
 
         case TCALL:
-            if(!Parse_call_statement(fp)) return ERROR;
+            if(Parse_call_statement(fp)) return ERROR;
             break;
 
         case TRETURN:
-            if(!Parse_return_statement(fp)) return ERROR;
+            if(Parse_return_statement(fp)) return ERROR;
             break;
 
         case TREAD:
         case TREADLN:
-            if(!Parse_input_statement(fp)) return ERROR;
+            if(Parse_input_statement(fp)) return ERROR;
             break;
 
         case TWRITE:
         case TWRITELN:
-            if(!Parse_output_statement(fp)) return ERROR;
+            if(Parse_output_statement(fp)) return ERROR;
             break;
 
         case TBEGIN:
-            if(!Parse_compound_statement(fp)) return ERROR;
+            if(Parse_compound_statement(fp)) return ERROR;
             break;
 
         default:
@@ -307,15 +306,15 @@ int Parse_condition_statement(FILE *fp){
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_expression(fp)) return ERROR;
+    if(Parse_expression(fp)) return ERROR;
 
     if(token != TTHEN) return error("'then' is not found");
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_statement(fp)) return ERROR;
+    if(Parse_statement(fp)) return ERROR;
 
-    if(token == TELSE && !Parse_statement(fp)) return ERROR;
+    if(token == TELSE && Parse_statement(fp)) return ERROR;
 
     return NORMAL;
 }
@@ -325,13 +324,13 @@ int Parse_iteration_statement(FILE *fp){
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_expression(fp)) return ERROR;
+    if(Parse_expression(fp)) return ERROR;
 
     if(token != TDO) return error("'do' is not found");
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_statement(fp)) return ERROR;
+    if(Parse_statement(fp)) return ERROR;
     return NORMAL;
 }
 
@@ -345,10 +344,10 @@ int Parse_call_statement(FILE *fp){
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_procedule_name(fp)) return ERROR;
+    if(Parse_procedule_name(fp)) return ERROR;
 
     if(token == TLPAREN){
-        if(!Parse_expressions(fp)) return ERROR;
+        if(Parse_expressions(fp)) return ERROR;
         if(token != TRPAREN) return error("parentheses is not found in call statement");
         fprintf(stdout, "%s ", tokenstr[token]);
         token = scan(fp);
@@ -356,13 +355,13 @@ int Parse_call_statement(FILE *fp){
     return NORMAL;
 }
 int Parse_expressions(FILE *fp){
-    if(!Parse_expression(fp)) return ERROR;
+    if(Parse_expression(fp)) return ERROR;
     
     while(token == TCOMMA){
         fprintf(stdout, "%s ", tokenstr[token]);
         token = scan(fp);
 
-        if(!Parse_expression(fp)) return ERROR;
+        if(Parse_expression(fp)) return ERROR;
     }
 
     return NORMAL;
@@ -374,27 +373,27 @@ int Parse_return_statement(FILE *fp){
 }
 
 int Parse_assignment_statement(FILE *fp){
-    if(!Parse_left_part(fp)) return ERROR;
+    if(Parse_left_part(fp)) return ERROR;
 
     if(token != TASSIGN) return error("':=' is not found in assign statement");
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
-    if(!Parse_statement(fp)) return ERROR;
+    if(Parse_statement(fp)) return ERROR;
 
     return NORMAL;
 }
 
 int Parse_left_part(FILE *fp){
-    if(!Parse_variable(fp)) return ERROR;
+    if(Parse_variable(fp)) return ERROR;
     return NORMAL;
 }
 
 int Parse_variable(FILE *fp){
-    if(!Parse_variable_name(fp)) return ERROR;
+    if(Parse_variable_name(fp)) return ERROR;
     
     if(token == TLSQPAREN){
-        if(!Parse_statement(fp)) return ERROR;
+        if(Parse_statement(fp)) return ERROR;
 
         if(token != TRSQPAREN) return error("Square brackets is not found in variable statement");
         fprintf(stdout, "%s ", tokenstr[token]);
@@ -404,13 +403,13 @@ int Parse_variable(FILE *fp){
     return NORMAL;
 }
 int Parse_expression(FILE *fp){
-    if(!Parse_simple_expression(fp)) return ERROR;
+    if(Parse_simple_expression(fp)) return ERROR;
 
     while(token == TEQUAL || token == TNOTEQ || token == TLE ||
         token == TLEEQ || token == TGR || token == TGREQ ){
 
-            if(!Parse_relational_operator(fp)) return ERROR;
-            if(!Parse_simple_expression(fp)) return ERROR;
+            if(Parse_relational_operator(fp)) return ERROR;
+            if(Parse_simple_expression(fp)) return ERROR;
     }
     return NORMAL;
 }
@@ -421,22 +420,22 @@ int Parse_simple_expression(FILE *fp){
         token = scan(fp);
     }
 
-    if(!Parse_term(fp)) return ERROR;
+    if(Parse_term(fp)) return ERROR;
 
     while(token == TPLUS || token == TMINUS || token == TOR){
-        if(!Parse_additive_operator(fp)) return ERROR;
-        if(!Parse_term(fp)) return ERROR;
+        if(Parse_additive_operator(fp)) return ERROR;
+        if(Parse_term(fp)) return ERROR;
     }
 
     return NORMAL;
 }
 
 int Parse_term(FILE *fp){
-    if(!Parse_factor(fp)) return ERROR;
+    if(Parse_factor(fp)) return ERROR;
 
     while(token == TSTAR || token == TDIV || token == TAND){
-        if(!Parse_multiplicative_operator(fp)) return ERROR;
-        if(!Parse_factor(fp)) return ERROR;
+        if(Parse_multiplicative_operator(fp)) return ERROR;
+        if(Parse_factor(fp)) return ERROR;
     }
 
     return NORMAL;
@@ -445,28 +444,28 @@ int Parse_term(FILE *fp){
 int Parse_factor(FILE *fp){
     switch(token){
         case TNAME:
-            if(!Parse_variable(fp)) return ERROR;
+            if(Parse_variable(fp)) return ERROR;
             break;
         case TNUMBER:
         case TFALSE:
         case TTRUE:
         case TSTRING:
-            if(!Parse_constant(fp)) return ERROR;
+            if(Parse_constant(fp)) return ERROR;
             break;
         case TLPAREN:
-            if(!Parse_expression(fp)) return ERROR;
+            if(Parse_expression(fp)) return ERROR;
             if(token != TRPAREN) return error("parentheses is not found in factor");
             fprintf(stdout, "%s ", tokenstr[token]);
             token = scan(fp);
             break;
         case TNOT:
-            if(!Parse_factor(fp)) return ERROR;
+            if(Parse_factor(fp)) return ERROR;
             break;
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
-            if(!Parse_standard_type(fp)) return ERROR;
-            if(!Parse_expression(fp)) return ERROR;
+            if(Parse_standard_type(fp)) return ERROR;
+            if(Parse_expression(fp)) return ERROR;
             if(token != TRPAREN) return error("parentheses is not found in factor");
             fprintf(stdout, "%s ", tokenstr[token]);
             token = scan(fp);
@@ -477,8 +476,9 @@ int Parse_factor(FILE *fp){
     }
     return NORMAL;
 }
+
 int Parse_constant(FILE *fp){
-    if(token != TNUMBER && token != TFALSE && token != TTRUE && token != TSTRING){
+    if(!(token == TNUMBER || token == TFALSE || token == TTRUE || token == TSTRING)){
         return error("expect [NUMBER] or 'false' or 'true' or [STRING]");
     }
     fprintf(stdout, "%s ", tokenstr[token]);
@@ -486,7 +486,7 @@ int Parse_constant(FILE *fp){
     return NORMAL;
 }
 int Parse_multiplicative_operator(FILE *fp){
-    if(token != TSTAR && token != TDIV && token != TAND){
+    if(!(token == TSTAR || token == TDIV || token == TAND)){
         return error("expect '*' or 'div' or 'and'");
     }
     fprintf(stdout, "%s ", tokenstr[token]);
@@ -494,7 +494,7 @@ int Parse_multiplicative_operator(FILE *fp){
     return NORMAL;
 }
 int Parse_additive_operator(FILE *fp){
-    if(token != TPLUS && token != TMINUS && token != TOR){
+    if(!(token == TPLUS || token == TMINUS || token == TOR)){
         return error("expect '+' or '-' or 'or'");
     }
     fprintf(stdout, "%s ", tokenstr[token]);
@@ -502,8 +502,8 @@ int Parse_additive_operator(FILE *fp){
     return NORMAL;
 }
 int Parse_relational_operator(FILE *fp){
-    if(token != TEQUAL || token != TNOTEQ || token != TLE ||
-        token != TLEEQ || token != TGR || token != TGREQ ){
+    if(!( token == TEQUAL || token == TNOTEQ || token == TLE   ||
+          token == TLEEQ  || token == TGR    || token == TGREQ     )){
             return error("expect relational operator");
     }
     fprintf(stdout, "%s ", tokenstr[token]);
@@ -518,10 +518,15 @@ int Parse_input_statement(FILE *fp){
     else return error("'read' or 'readln' is not found");
 
     if(token == TLPAREN){
-        if(!Parse_variable(fp)) return ERROR;
+        fprintf(stdout, "%s ", tokenstr[token]);
+        token = scan(fp); 
+
+        if(Parse_variable(fp)) return ERROR;
 
         while(token == TCOMMA){
-            if(!Parse_variable(fp)) return ERROR;
+            fprintf(stdout, "%s ", tokenstr[token]);
+            token = scan(fp); 
+            if(Parse_variable(fp)) return ERROR;
         }
 
         if(token != TRPAREN) return error("expect parentheses in input statement");
@@ -539,10 +544,14 @@ int Parse_output_statement(FILE *fp){
     else return error("'write' or 'writeln' is not found");
 
     if(token == TLPAREN){
-        if(!Parse_output_format(fp)) return ERROR;
+        fprintf(stdout, "%s ", tokenstr[token]);
+        token = scan(fp); 
+        if(Parse_output_format(fp)) return ERROR;
 
         while(token == TCOMMA){
-            if(!Parse_output_format(fp)) return ERROR;
+            fprintf(stdout, "%s ", tokenstr[token]);
+            token = scan(fp); 
+            if(Parse_output_format(fp)) return ERROR;
         }
 
         if(token != TRPAREN) return error("expect parentheses in input statement");
@@ -558,7 +567,7 @@ int Parse_output_format(FILE *fp){
         return NORMAL;
     }
 
-    if(!Parse_expression(fp)) return ERROR;
+    if(Parse_expression(fp)) return ERROR;
     if(token == TCOLON){
         fprintf(stdout, "%s ", tokenstr[token]);
         token = scan(fp);
