@@ -83,6 +83,7 @@ int scan(FILE *fp){
         now_buf = next_buf;
         
         next_buf = fgetc(fp);
+
         if(now_buf == EOF) return -1;
         
         switch (now_buf){
@@ -335,7 +336,6 @@ static int Skip_Comment(char skip_character, FILE *fp){
             return 0;
         }
         if(skip_character == '}' && init_character == '{'){
-            next_buf = fgetc(fp);
             return 0;
         }
     }

@@ -43,8 +43,6 @@ int Parse_program(FILE *fp){
 
 int Parse_block(FILE *fp){
 
-    if(token != TVAR && token != TPROCEDURE) return error("'var' or 'procedule' is not found");
-
     /* repeat variable declaration or subproblem declaration */
     while(token == TVAR || token == TPROCEDURE){
  
@@ -110,6 +108,7 @@ int Parse_variable_names(FILE *fp){
 
     while(token == TCOMMA){
         fprintf(stdout, "%s", tokenstr[token]);
+        token = scan(fp);
         if(Parse_variable_name(fp)) return ERROR;
     }
 
@@ -146,7 +145,7 @@ int Parse_array_type(FILE *fp){
     token = scan(fp);
 
     if(token != TNUMBER) return error("expect [NUMBER] in [array type] statement");
-    fprintf(stdout, "%s ", tokenstr[token]);
+    fprintf(stdout, "%s ", string_attr);
     token = scan(fp);
 
     if(token != TRSQPAREN) return error("Square brackets is not found in [array type] statement");
@@ -194,7 +193,7 @@ int Parse_subprogram_declaration(FILE *fp){
 
 int Parse_procedule_name(FILE *fp){
     if(token != TNAME) error("expect [NAME] in procedule statement");
-    fprintf(stdout, "%s ", tokenstr[token]);
+    fprintf(stdout, "%s ", string_attr);
     token = scan(fp);
     return NORMAL;
 }
@@ -251,10 +250,12 @@ int Parse_compound_statement(FILE *fp){
 
     if(token != TEND) return error("'end' is not found.");
     fprintf(stdout, "%s\n", tokenstr[token]);
+    token = scan(fp);
 
     return NORMAL;
 }
 int Parse_statement(FILE *fp){
+
     switch(token){
         case TNAME:
             if(Parse_assignment_statement(fp)) return ERROR;
@@ -295,7 +296,7 @@ int Parse_statement(FILE *fp){
             break;
 
         default:
-            return Parse_exit_statement(fp);
+            return Parse_empty_statement(fp);
             break;
     }
     return NORMAL;
@@ -311,11 +312,13 @@ int Parse_condition_statement(FILE *fp){
     if(token != TTHEN) return error("'then' is not found");
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
-
     if(Parse_statement(fp)) return ERROR;
-
-    if(token == TELSE && Parse_statement(fp)) return ERROR;
-
+    
+    if(token == TELSE){
+        fprintf(stdout, "%s ", tokenstr[token]);
+        token = scan(fp);
+        if(Parse_statement(fp)) return ERROR;
+    }    
     return NORMAL;
 }
 
@@ -336,6 +339,8 @@ int Parse_iteration_statement(FILE *fp){
 
 int Parse_exit_statement(FILE *fp){
     if(token != TBREAK) return error("'break' is not found");
+    fprintf(stdout, "%s\n", tokenstr[token]);
+    token = scan(fp);
     return NORMAL;
 }
 
@@ -373,13 +378,14 @@ int Parse_return_statement(FILE *fp){
 }
 
 int Parse_assignment_statement(FILE *fp){
+    
     if(Parse_left_part(fp)) return ERROR;
 
     if(token != TASSIGN) return error("':=' is not found in assign statement");
     fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
-    if(Parse_statement(fp)) return ERROR;
+    if(Parse_expression(fp)) return ERROR;
 
     return NORMAL;
 }
@@ -419,7 +425,7 @@ int Parse_simple_expression(FILE *fp){
         fprintf(stdout, "%s ", tokenstr[token]);
         token = scan(fp);
     }
-
+    
     if(Parse_term(fp)) return ERROR;
 
     while(token == TPLUS || token == TMINUS || token == TOR){
@@ -481,7 +487,8 @@ int Parse_constant(FILE *fp){
     if(!(token == TNUMBER || token == TFALSE || token == TTRUE || token == TSTRING)){
         return error("expect [NUMBER] or 'false' or 'true' or [STRING]");
     }
-    fprintf(stdout, "%s ", tokenstr[token]);
+    if(token == TSTRING || token == TNUMBER) fprintf(stdout, "%s ", string_attr);
+    else fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
     return NORMAL;
 }
@@ -562,7 +569,7 @@ int Parse_output_statement(FILE *fp){
 }
 int Parse_output_format(FILE *fp){
     if(token == TSTRING){
-        fprintf(stdout, "%s ", tokenstr[token]);
+        fprintf(stdout, "%s ", string_attr);
         token = scan(fp);
         return NORMAL;
     }
@@ -571,7 +578,10 @@ int Parse_output_format(FILE *fp){
     if(token == TCOLON){
         fprintf(stdout, "%s ", tokenstr[token]);
         token = scan(fp);
+        
         if(token != TNUMBER) return error("expect [NUMBER] in output statement");
+        fprintf(stdout, "%s ", string_attr);
+        token = scan(fp);
     }
     return NORMAL;
 }

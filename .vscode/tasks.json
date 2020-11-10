@@ -1,26 +1,32 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
+            "label": "build",
             "type": "shell",
-            "label": "C/C++: gcc build active file",
-            "command": "/usr/bin/gcc",
-            "args": [
-                "-g",
-                "${file}",
-                "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
-            ],
             "options": {
-                "cwd": "/usr/bin"
+                "shell": {
+                    "executable": "C:\\Windows\\System32\\wsl.exe",
+                }
             },
-            "problemMatcher": [
-                "$gcc"
+            "command": "g++",
+            "args": [
+                "-std=gnu++1y",
+                "-g",
+                "-O0",
+                "-I/opt/boost/gcc/include",
+                "-L/opt/boost/gcc/lib",
+                "-o",
+                "`wslpath",
+                "'${workspaceFolder}\\Compiler'`",
+                "`wslpath",
+                "'${file}'`",
+                "-std=c++17",
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             }
         }
-    ],
-    "version": "2.0.0"
+    ]
 }
