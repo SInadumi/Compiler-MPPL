@@ -1,13 +1,13 @@
 #include "token-list.h"
 
 /* public */
-int init_scan(char *filename, FILE **fp);
-int scan(FILE *fp);
-int get_linenum(void);
-void end_scan(FILE *fp);
-int num_attr;
+// int init_scan(char *filename, FILE **fp);
+// int scan(FILE *fp);
+// int get_linenum(void);
+// void end_scan(FILE *fp);
+int num_attr = 0;
 char string_attr[MAXSTRSIZE];
-int string_length;
+int string_length = 0;
 
 /* private */
 static int Skip_Keyword(char element, FILE *fp);
@@ -17,8 +17,8 @@ static int Skip_String(char string_element, FILE *fp);
 static int Skip_Comment(char skip_character, FILE *fp);
 static void Reset_val(void);
 
-static int row_num = 1; /* number of row */
-static char next_buf;   /* Look ahead buffer */
+static int row_num = 1;         /* number of row */
+static char next_buf = '\0';    /* Look ahead buffer */
 
 /* keyword list */
 keywords key[KEYWORDSIZE] = {
@@ -59,8 +59,8 @@ keywords key[KEYWORDSIZE] = {
 */
 int init_scan(char *filename, FILE **fp){
     *fp = fopen(filename, "r");
-    if(fp == NULL) return -1;
-    next_buf = fgetc(*fp);
+    if(*fp == NULL) return -1;
+    next_buf = (char)fgetc(*fp);
     return 0;
 }
 

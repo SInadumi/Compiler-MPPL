@@ -18,7 +18,7 @@ int main(int nc, char *np[]) {
 		error("File can not open.");
 		return 0;
     }
-	
+
 	/* Parse(program) */
 	is_success = Parse_program(fp);
 
@@ -28,12 +28,12 @@ int main(int nc, char *np[]) {
 	return is_success;
 }
 
-int error(char *mes) {
+int error(const char *mes) {
 	printf("\n ERROR: line %d %s\n", get_linenum(), mes);
 	return ERROR;
 }
 
-int warning(char *mes) {
+int warning(const char *mes) {
 	printf("\n WARNING: line %d %s\n", get_linenum(), mes);
 	return 0;
 }

@@ -67,8 +67,8 @@ typedef struct{
 }keywords;
 
 /* utilities */
-extern int error(char *mes);
-extern int warning(char *mes);
+extern int error(const char *mes);
+extern int warning(const char *mes);
 
 /* id-list.c */
 extern void init_idtab();
