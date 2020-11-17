@@ -12,8 +12,10 @@ char *tokenstr[NUMOFTOKEN+1] = {
 };
 
 /* private */
-static int is_empty = 0;
-static int token;
+static int is_empty = 0;    // Does Exist empty statement
+static int is_iterate = 0;  // Judge whether this is scanning of iteration statement or not
+static int token = 0;       // Token code Buffer
+static int now_step = 0;    // Ref program steps
 
 int Parse_program(FILE *fp){
 
@@ -58,10 +60,9 @@ int Parse_block(FILE *fp){
     return NORMAL; 
 }
 
-/*
-memo: 'var'はtokenに先読みされた状態で関数に入る
-*/
 int Parse_variable_declaration(FILE *fp){
+    now_step++;
+    Generate_steps_of_mpl();
 
     if(token != TVAR) return error("'var' is not found");
     fprintf(stdout, "%s ", tokenstr[token]);
@@ -80,14 +81,16 @@ int Parse_variable_declaration(FILE *fp){
     if (token != TSEMI) return error("[;] is not found");
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
-  
+
     while(token == TNAME){
-        
+        now_step++;
+        Generate_steps_of_mpl();
+
         /* Parse(variable names) */
         if(Parse_variable_names(fp)) return ERROR;
 
         if(token != TCOLON) return error("[:] is not found");
-        fprintf(stdout, "%s\n", tokenstr[token]);
+        fprintf(stdout, "%s ", tokenstr[token]);
         token = scan(fp);
 
         /* Parse(type) */
@@ -96,8 +99,11 @@ int Parse_variable_declaration(FILE *fp){
         if (token != TSEMI) return error("[;] is not found");
         fprintf(stdout, "%s\n", tokenstr[token]);
         token = scan(fp);
+
+        now_step--;
     }
 
+    now_step--;
     return NORMAL;
 }
 int Parse_variable_names(FILE *fp){
@@ -171,10 +177,10 @@ int Parse_array_type(FILE *fp){
     return NORMAL;
 }
 
-/*
-memo: 'procedule'はtokenに先読みされた状態で関数に入る
-*/
 int Parse_subprogram_declaration(FILE *fp){
+    now_step++;
+    Generate_steps_of_mpl();
+
     if(token != TPROCEDURE) return error("'procedule' is not found");
     
     fprintf(stdout, "%s ", tokenstr[token]);
@@ -193,12 +199,14 @@ int Parse_subprogram_declaration(FILE *fp){
     if(token == TVAR && Parse_variable_declaration(fp)) return ERROR;
 
     /* Parse(compound statement) */
+    Generate_steps_of_mpl();
     if(Parse_compound_statement(fp)) return ERROR;    
 
     if (token != TSEMI) return error("[;] is not found");
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
 
+    now_step--;
     return NORMAL;
 }
 
@@ -246,9 +254,13 @@ int Parse_formal_parameters(FILE *fp){
 
 }
 int Parse_compound_statement(FILE *fp){
+
     if(token != TBEGIN) return error("'begin' is not found.");
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
+
+    now_step++;
+    Generate_steps_of_mpl();
 
     /* Parse(statement) */
     if (Parse_statement(fp)) return ERROR;
@@ -256,11 +268,20 @@ int Parse_compound_statement(FILE *fp){
     while(token == TSEMI){
         fprintf(stdout, "%s\n", tokenstr[token]);
         token = scan(fp);
+
+        Generate_steps_of_mpl();
         if(Parse_statement(fp)) return ERROR;
     }
 
     if(token != TEND) return error("'end' is not found.");
-    fprintf(stdout, "%s\n", tokenstr[token]);
+    now_step--;
+    if(is_empty == 1){
+        is_empty = 0;
+        fprintf(stdout, "\r");
+    }else fprintf(stdout, "\n");
+
+    Generate_steps_of_mpl();
+    fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
     return NORMAL;
@@ -307,7 +328,7 @@ int Parse_statement(FILE *fp){
             break;
 
         default:
-            return Parse_empty_statement(fp);
+            return Parse_empty_statement();
             break;
     }
     return NORMAL;
@@ -321,14 +342,24 @@ int Parse_condition_statement(FILE *fp){
     if(Parse_expression(fp)) return ERROR;
 
     if(token != TTHEN) return error("'then' is not found");
-    fprintf(stdout, "%s ", tokenstr[token]);
+    fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
+
+    now_step++;
+    Generate_steps_of_mpl();
     if(Parse_statement(fp)) return ERROR;
+    now_step--;
     
     if(token == TELSE){
-        fprintf(stdout, "%s ", tokenstr[token]);
+        fprintf(stdout, "\n");
+        Generate_steps_of_mpl();
+        fprintf(stdout, "%s\n", tokenstr[token]);
         token = scan(fp);
+
+        now_step++;
+        Generate_steps_of_mpl();
         if(Parse_statement(fp)) return ERROR;
+        now_step--;
     }    
     return NORMAL;
 }
@@ -344,26 +375,31 @@ int Parse_iteration_statement(FILE *fp){
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
 
+    is_iterate++;
+    Generate_steps_of_mpl();
     if(Parse_statement(fp)) return ERROR;
+    is_iterate--;
     return NORMAL;
 }
 
 int Parse_exit_statement(FILE *fp){
     if(token != TBREAK) return error("'break' is not found");
-    fprintf(stdout, "%s\n", tokenstr[token]);
-    token = scan(fp);
+    if(is_iterate > 0){
+        fprintf(stdout, "%s\n", tokenstr[token]);
+        token = scan(fp);
+    }else error("'break' is not exist in iteration statement");        
     return NORMAL;
 }
 
 int Parse_call_statement(FILE *fp){
     if(token != TCALL) return error("'call' is not found");
-    fprintf(stdout, "%s\n", tokenstr[token]);
+    fprintf(stdout, "%s ", tokenstr[token]);
     token = scan(fp);
 
     if(Parse_procedule_name(fp)) return ERROR;
 
     if(token == TLPAREN){
-        fprintf(stdout, "%s\n", tokenstr[token]);
+        fprintf(stdout, "%s", tokenstr[token]);
         token = scan(fp);
 
         if(Parse_expressions(fp)) return ERROR;
@@ -490,6 +526,8 @@ int Parse_factor(FILE *fp){
             token = scan(fp);
             break;
         case TNOT:
+            fprintf(stdout, "%s ", tokenstr[token]);
+            token = scan(fp);
             if(Parse_factor(fp)) return ERROR;
             break;
         case TINTEGER:
@@ -581,12 +619,14 @@ int Parse_output_statement(FILE *fp){
 
     if(token == TLPAREN){
         fprintf(stdout, "%s ", tokenstr[token]);
-        token = scan(fp); 
+        token = scan(fp);
+
         if(Parse_output_format(fp)) return ERROR;
 
         while(token == TCOMMA){
             fprintf(stdout, "%s ", tokenstr[token]);
             token = scan(fp); 
+
             if(Parse_output_format(fp)) return ERROR;
         }
 
@@ -600,11 +640,11 @@ int Parse_output_format(FILE *fp){
     
     switch(token){
         case TSTRING:
-            if(string_length > 1){
+            if(strlen(string_attr) > 1){
                 fprintf(stdout, "%s ", string_attr);
                 token = scan(fp);
+                break;
             }
-            break;
         case TPLUS:
         case TMINUS:
         case TNAME:
@@ -632,7 +672,14 @@ int Parse_output_format(FILE *fp){
     }
     return NORMAL;
 }
-int Parse_empty_statement(FILE *fp){
+int Parse_empty_statement(){
     is_empty = 1;
     return NORMAL;
+}
+
+void Generate_steps_of_mpl(){
+    int index = 0;
+    for(index = 0; index < now_step; index++){
+        fprintf(stdout, "\t");
+    }
 }

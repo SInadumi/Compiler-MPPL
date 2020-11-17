@@ -81,7 +81,6 @@ extern void release_idtab();
 /* scan.c */
 extern int num_attr;
 extern char string_attr[MAXSTRSIZE];
-extern int string_length;
 extern int init_scan(char *filename, FILE **fp);
 extern int scan(FILE *fp);
 extern int get_linenum(void);

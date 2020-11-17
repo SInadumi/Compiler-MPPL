@@ -7,7 +7,6 @@
 // void end_scan(FILE *fp);
 int num_attr = 0;
 char string_attr[MAXSTRSIZE];
-int string_length = 0;
 
 /* private */
 static int Skip_Keyword(char element, FILE *fp);
@@ -164,7 +163,7 @@ int scan(FILE *fp){
 
         default:   
             /* comment */
-            if(now_buf == '/' && next_buf == '*' || now_buf == '{'){
+            if((now_buf == '/' && next_buf == '*') || now_buf == '{'){
                 token_code = Skip_Comment(now_buf, fp);
                 break;
             }
@@ -201,26 +200,24 @@ static int Skip_Keyword(char element, FILE *fp){
     element = next_buf;
 
     /* Input Alphabet to string_attr */
-    while((int)element >= (int)'A' && (int)element <= (int)'Z'
-       || (int)element >= (int)'a' && (int)element <= (int)'z' ){
+    while(((int)element >= (int)'A' && (int)element <= (int)'Z')
+       || ((int)element >= (int)'a' && (int)element <= (int)'z' )){
 
         if(total_word_element >= MAXSTRSIZE) break;
 
         string_attr[total_word_element++] = element;
-        string_length++;
         element = fgetc(fp);
     
     }
 
     /* Input Alphabet or Digits to string_attr */
-    while((int)element >= (int)'A' && (int)element <= (int)'Z'
-       || (int)element >= (int)'a' && (int)element <= (int)'z' 
-       || (int)element >= (int)'0' && (int)element <= (int)'9'){
+    while(((int)element >= (int)'A' && (int)element <= (int)'Z')
+       || ((int)element >= (int)'a' && (int)element <= (int)'z' )
+       || ((int)element >= (int)'0' && (int)element <= (int)'9')){
         
         if(total_word_element >= MAXSTRSIZE) break;
 
         string_attr[total_word_element++] = element;
-        string_length++;
         element = fgetc(fp);
 
     }
@@ -259,7 +256,6 @@ static int Check_Keyword(char *elements){
 */
 static int Skip_String(char string_element, FILE *fp){
     int total_string_element = 0;
-    char init_character = string_element;
 
     /* Input String to string_attr */
     while(string_element != EOF){
@@ -284,7 +280,6 @@ static int Skip_String(char string_element, FILE *fp){
         }
 
         string_attr[total_string_element++] = string_element;
-        string_length++;
     }
 
     /* Error: Token hasn't statement at end of ["] */
@@ -348,7 +343,6 @@ static int Skip_Comment(char skip_character, FILE *fp){
 static void Reset_val(){
     num_attr = 0;
     memset(string_attr, '\0', MAXSTRSIZE);
-    string_length = 0;
 }
 
 /*

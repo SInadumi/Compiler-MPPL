@@ -5,14 +5,7 @@ CFLAGS = -g -Wall -Wextra
 
 $(PROGRAM): $(OBJS)
 	$(CC) -o $(PROGRAM) $^
-
-# token-list.o: token-list.c
-# 	$(CC) $(CFLAGS) -c $<
-
-# id-list.o: id-list.c
-# 	$(CC) $(CFLAGS) -c $<
-# scan.o: scan.c
-# 	$(CC) $(CFLAGS) -c $<
+	
 .c.o:
 	$(CC) $(CFLAGS) -c $<
 
