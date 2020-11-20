@@ -1,9 +1,6 @@
 ﻿#include "token-list.h"
 #include "pretty_printer.h"
 
-/* public  */
-/* private */
-
 int main(int nc, char *np[]) {
 	FILE *fp;
 	int is_success = EXIT_SUCCESS;
