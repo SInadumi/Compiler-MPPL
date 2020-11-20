@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${command:extension.vscode-wsl-workspaceFolder}/Compiler",
-            "args": [ "${command:extension.vscode-wsl-workspaceFolder}/Inputs/2/sample29p.mpl"],
+            "args": [ "${command:extension.vscode-wsl-workspaceFolder}/Inputs/2/sample02a.mpl"],
             "stopAtEntry": false,
             "cwd": "${command:extension.vscode-wsl-workspaceFolder}",
             "environment": [],
