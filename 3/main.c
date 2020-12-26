@@ -1,5 +1,5 @@
 ﻿#include "token-list.h"
-#include "pretty_printer.h"
+#include "parser.h"
 
 int main(int nc, char *np[]) {
 	FILE *fp;

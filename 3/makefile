@@ -1,5 +1,5 @@
 PROGRAM = Compiler
-OBJS = main.o scan.o pretty_printer.o
+OBJS = main.o scan.o parser.o cxref.o
 CC = gcc
 CFLAGS = -g -Wall -Wextra
 
@@ -14,6 +14,7 @@ clean:
 	$(RM) $(PROGRAM) $(OBJS)
 
 # 依存関係
-main.o : token-list.h pretty_printer.h main.c
+main.o : token-list.h parser.h main.c
 scan.o : token-list.h scan.c
-pretty_printer.o : pretty_printer.h pretty_printer.c
+parser.o : parser.h parser.c
+cxref.o : cxref.h cxref.h

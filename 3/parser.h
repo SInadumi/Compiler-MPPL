@@ -1,4 +1,4 @@
-/* pretty_printer.h */
+/* parser.h */
 
 #include <stdlib.h>
 #include <stdio.h>
