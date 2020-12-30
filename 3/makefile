@@ -1,4 +1,4 @@
-PROGRAM = Compiler
+PROGRAM = ../Compiler
 OBJS = main.o scan.o parser.o cxref.o
 CC = gcc
 CFLAGS = -g -Wall -Wextra

@@ -40,6 +40,7 @@ struct LINE{
     irefp
     nexttp
 */
+
 struct ID{
     char *name;
     char *procname;
@@ -50,10 +51,15 @@ struct ID{
     struct ID *nextp;
 }*globalidroot, *localidroot;
 
+extern char *prev_procname;
+
 extern void init_global_idtab(void);
 extern void init_local_idtab(void);
 extern struct ID *search_idtab(char *np);
-extern void memorize_type(void);
+extern int memorize_name(char *name);
+extern int memorize_linenum(int line);
+extern int define_globalid(struct TYPE * itp, char *tpname);
+extern int define_localid(int TYPE);
 extern void print_idtab(void);
 extern void release_global_idtab(void);
 extern void release_local_idtab(void);

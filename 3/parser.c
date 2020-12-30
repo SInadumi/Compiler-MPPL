@@ -22,6 +22,9 @@ static int Check_Standard_Type(int TYPE);
 
 int Parse_program(FILE *fp){
 
+    /* Initialize global id table*/
+    init_global_idtab();
+
     token = scan(fp);
     if(token != TPROGRAM) return error("'program' is not found");
     fprintf(stdout,"%s ", tokenstr[token]);
@@ -42,6 +45,9 @@ int Parse_program(FILE *fp){
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
 
+    /* release global id table */
+    release_global_idtab();
+
     return NORMAL; 
 }
 
@@ -54,7 +60,8 @@ int Parse_block(FILE *fp){
         if(token == TVAR){ 
             if(Parse_variable_declaration(fp)) return ERROR;
         }else if(token == TPROCEDURE){
-             if(Parse_subprogram_declaration(fp)) return ERROR;
+            break;
+            if(Parse_subprogram_declaration(fp)) return ERROR;
         }else return error("'var' or 'procedure' is not found");
         
     }
@@ -90,6 +97,9 @@ int Parse_variable_declaration(FILE *fp){
     /* Parse(type) */
     if((TYPE = Parse_type(fp)) == ERROR) return ERROR;
 
+    // register ID
+    //if(define_globalid(TYPE)) return ERROR;
+
     if (token != TSEMI) return error("Semicolon is not found in variable declaration statement");
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
@@ -116,7 +126,7 @@ int Parse_variable_declaration(FILE *fp){
     }
 
     now_step--;
-    return TYPE;
+    return NORMAL;
 }
 int Parse_variable_names(FILE *fp){
 
@@ -135,10 +145,14 @@ int Parse_variable_names(FILE *fp){
 }
 
 int Parse_variable_name(FILE *fp){
-
+    
     if(token != TNAME) error("expect [NAME]. For the purpose of using valiable token");
+    if(memorize_name(string_attr)) return ERROR;
+    if(memorize_linenum(get_linenum())) return ERROR;
+
     fprintf(stdout, "%s ", string_attr);
     token = scan(fp);
+    
     return NORMAL;
 }
 
@@ -519,7 +533,12 @@ int Parse_assignment_statement(FILE *fp){
 
 int Parse_left_part(FILE *fp){
     int TYPE = ERROR;
-    if((TYPE = Parse_variable(fp)) == ERROR) return ERROR;
+    if(Parse_variable(fp)) return ERROR;
+
+    // 型を探して返す
+    fprintf(stdout, "型を探して返す処理を追加する(left part)");
+    TYPE = NORMAL;
+
     return TYPE;
 }
 
