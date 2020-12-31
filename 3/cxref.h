@@ -59,7 +59,7 @@ extern char *prev_procname;
 
 extern void init_global_idtab(void);
 extern void init_local_idtab(void);
-extern struct ID *search_idtab(char *np);
+extern struct ID *search_idtab(char *name, int is_global);
 extern int memorize_name(char *name);
 extern int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct TYPE *tparatp);
 extern int memorize_linenum(int line);
@@ -67,3 +67,4 @@ extern int define_identifer(char *tpname, int is_formal, int is_global);
 extern void print_idtab(void);
 extern void release_global_idtab(void);
 extern void release_local_idtab(void);
+extern struct TYPE *get_etp_type_structure();

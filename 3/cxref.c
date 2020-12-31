@@ -34,8 +34,29 @@ static void init_formaltab(){
     t_namesroot = NULL;
 }
 
-/* search the name pointed by np */
-struct ID *search_idtab(char *np){
+
+
+/* 
+    search the name pointed by np 
+    found :     return -> pointer to ID structure
+    not found : return -> NULL
+*/
+
+struct ID *search_idtab(char *name, int is_global){
+
+    struct ID *p;
+
+    // search among localidroot
+    if(!is_global){
+        for(p = localidroot; p != NULL; p = p->nextp){
+            if(strcmp(name, p->name) == 0) return p;
+        }
+    }
+
+    // search among globalidroot
+    for(p = globalidroot; p != NULL; p = p->nextp){
+        if(strcmp(name, p->name) == 0) return p;
+    }
 
     return (NULL);
 }
@@ -120,7 +141,7 @@ int define_identifer(char *tpname, int is_formal, int is_global){
     // register loop
     for(name_p = t_namesroot; name_p != NULL; name_p = name_q){
         // Check whether Duplicative name or not
-        if((p = search_idtab(name_p->formal_name)) != NULL){
+        if((p = search_idtab(name_p->formal_name, is_global)) != NULL){
             return error("NAME is already Defined");
         }
 
@@ -228,4 +249,10 @@ static void release_formaltab(){
         free(p);
     }
     init_formaltab();
+}
+
+struct TYPE *get_etp_type_structure(){
+    // if t_type is NULL, calling func must stop program
+    if(t_type != NULL) return t_type;
+    else return NULL;
 }
