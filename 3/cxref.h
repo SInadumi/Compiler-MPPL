@@ -5,7 +5,7 @@
 #define FORMAL_PARAM 1
 #define NOT_FORMAL_PARAM 0
 #define GLOBAL_PARAM 1
-#define NOT_GLOBAL_PARAM 0
+#define LOCAL_PARAM 0
 
 /*
     TYPE struct has infomation regarding type
@@ -55,16 +55,16 @@ struct ID{
     struct ID *nextp;
 }*globalidroot, *localidroot;
 
-extern char *prev_procname;
-
 extern void init_global_idtab(void);
 extern void init_local_idtab(void);
 extern struct ID *search_idtab(char *name, int is_global);
 extern int memorize_name(char *name);
 extern int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct TYPE *tparatp);
 extern int memorize_linenum(int line);
-extern int define_identifer(char *tpname, int is_formal, int is_global);
-extern void print_idtab(void);
+extern int memorize_procname(char *name);
+extern int define_identifer(int is_formal, int is_global);
+extern void print_cxref_table(void);
 extern void release_global_idtab(void);
 extern void release_local_idtab(void);
+extern void release_procname(void);
 extern struct TYPE *get_etp_type_structure();

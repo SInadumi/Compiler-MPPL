@@ -12,6 +12,7 @@ static struct NAMES{
     char *formal_name;
     struct NAMES *nextname;
 } *t_namesroot;
+static char *prev_procname;
 
 static void init_formaltab();
 static void release_formaltab();
@@ -32,22 +33,20 @@ static void init_formaltab(){
     t_lineroot = NULL;
     t_type = NULL;
     t_namesroot = NULL;
+    prev_procname = NULL;
 }
-
-
 
 /* 
     search the name pointed by np 
     found :     return -> pointer to ID structure
     not found : return -> NULL
 */
-
 struct ID *search_idtab(char *name, int is_global){
 
     struct ID *p;
 
     // search among localidroot
-    if(!is_global){
+    if(is_global == LOCAL_PARAM){
         for(p = localidroot; p != NULL; p = p->nextp){
             if(strcmp(name, p->name) == 0) return p;
         }
@@ -55,7 +54,7 @@ struct ID *search_idtab(char *name, int is_global){
 
     // search among globalidroot
     for(p = globalidroot; p != NULL; p = p->nextp){
-        if(strcmp(name, p->name) == 0) return p;
+        if(strcmp(name, p->name) == 0 && p->procname == NULL) return p;
     }
 
     return (NULL);
@@ -129,8 +128,16 @@ int memorize_linenum(int line){
     return NORMAL;
 }
 
+int memorize_procname(char *name){
+    if((prev_procname = (char *)malloc(strlen(name) + 1)) == NULL){
+        return error("cannot malloc in memorize procname");
+    }
+    strcpy(prev_procname, name);
+    return NORMAL;  
+}
+
 // ID構造体に保存(is_global -> 1 : globalid, is_global -> 0 : localid)
-int define_identifer(char *tpname, int is_formal, int is_global){
+int define_identifer(int is_formal, int is_global){
     struct ID *p;
     char *temp_name;
     char *temp_procname;
@@ -152,8 +159,8 @@ int define_identifer(char *tpname, int is_formal, int is_global){
         if((temp_name = (char *)malloc(strlen(name_p->formal_name) + 1)) == NULL){
             return error("cannot malloc-2 in define globalidroot");
         }
-        if(tpname != NULL){
-            if((temp_procname = (char *)malloc(strlen(tpname) + 1)) == NULL){
+        if(prev_procname != NULL){
+            if((temp_procname = (char *)malloc(strlen(prev_procname) + 1)) == NULL){
                 return error("cannot malloc-3 in define globalidroot");
             }
         }else{
@@ -165,8 +172,8 @@ int define_identifer(char *tpname, int is_formal, int is_global){
         
         // assign temp pointers
         strcpy(temp_name, name_p->formal_name);
-        if(tpname != NULL){
-            strcpy(temp_procname, tpname);
+        if(prev_procname != NULL){
+            strcpy(temp_procname, prev_procname);
         }else{
             temp_procname = NULL;
         }
@@ -201,7 +208,7 @@ int define_identifer(char *tpname, int is_formal, int is_global){
 
 // }
 
-void print_idtab(){
+void print_cxref_table(){
 
 }
 
@@ -220,6 +227,12 @@ void release_global_idtab(){
 
 void release_local_idtab(){
     struct ID *p, *q;
+    struct ID *temp = NULL;
+
+    temp = localidroot;
+    temp->nextp = globalidroot;
+    globalidroot = temp;
+
     for(p = localidroot; p != NULL; p = q){
         free(p->name);
         free(p->procname);
@@ -248,6 +261,9 @@ static void release_formaltab(){
         q = p->nextname;
         free(p);
     }
+    
+    if(prev_procname != NULL) free(prev_procname);
+
     init_formaltab();
 }
 

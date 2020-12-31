@@ -45,6 +45,9 @@ int Parse_program(FILE *fp){
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
 
+    /* print cxref table */
+    print_cxref_table();
+
     /* release global id table */
     release_global_idtab();
 
@@ -60,7 +63,6 @@ int Parse_block(FILE *fp){
         if(token == TVAR){ 
             if(Parse_variable_declaration(fp) == ERROR) return ERROR;
         }else if(token == TPROCEDURE){
-            break;
             if(Parse_subprogram_declaration(fp) == ERROR) return ERROR;
         }else return error("'var' or 'procedure' is not found");
         
@@ -97,8 +99,8 @@ int Parse_variable_declaration(FILE *fp){
     /* Parse(type) */
     if((TYPE = Parse_type(fp)) == ERROR) return ERROR;
 
-    // register ID
-    if(define_identifer(NULL, NOT_FORMAL_PARAM, GLOBAL_PARAM) == ERROR) return ERROR;
+    // register ID(globalidroot)
+    if(define_identifer(NOT_FORMAL_PARAM, GLOBAL_PARAM) == ERROR) return ERROR;
 
     if (token != TSEMI) return error("Semicolon is not found in variable declaration statement");
     fprintf(stdout, "%s\n", tokenstr[token]);
@@ -118,8 +120,8 @@ int Parse_variable_declaration(FILE *fp){
         /* Parse(type) */
         if((TYPE = Parse_type(fp)) == ERROR) return ERROR;
 
-        /* register ID */
-        if(define_identifer(NULL, NOT_FORMAL_PARAM, GLOBAL_PARAM) == ERROR) return ERROR;
+        /* register ID(glbalidroot) */
+        if(define_identifer(NOT_FORMAL_PARAM, GLOBAL_PARAM) == ERROR) return ERROR;
 
         if (token != TSEMI) return error("Semicolon is not found in variable declaration statement");
         fprintf(stdout, "%s\n", tokenstr[token]);
@@ -228,6 +230,9 @@ int Parse_array_type(FILE *fp){
 int Parse_subprogram_declaration(FILE *fp){
     now_step++;
     Generate_steps_of_mpl();
+
+    /* initialize localidtab */
+    init_local_idtab();
     
     // この手続き名のスコープはプログラム全体である
     // この手続き名をこの複合文内で使用することはできない．再帰呼び出しはできない
@@ -263,12 +268,16 @@ int Parse_subprogram_declaration(FILE *fp){
     fprintf(stdout, "%s\n", tokenstr[token]);
     token = scan(fp);
 
+    /* release local idtab */
+    release_local_idtab();
+
     now_step--;
     return NORMAL;
 }
 
 int Parse_procedule_name(FILE *fp){
     if(token != TNAME) error("expect [NAME] in procedule statement");
+    memorize_procname((char *)string_attr);
     fprintf(stdout, "%s ", string_attr);
     token = scan(fp);
     return NORMAL;
@@ -293,6 +302,8 @@ int Parse_formal_parameters(FILE *fp){
 
     if((TYPE = Parse_type(fp)) == ERROR) return ERROR;
     if(Check_Standard_Type(TYPE) == ERROR) return error("type is expected integer or boolean or char in formal parameter");
+    /* register ID(localidroot) */
+    if(define_identifer(FORMAL_PARAM, LOCAL_PARAM) == ERROR) return ERROR;
 
     while(token == TSEMI){
         fprintf(stdout, "%s ", tokenstr[token]);
@@ -306,6 +317,8 @@ int Parse_formal_parameters(FILE *fp){
 
         if((TYPE = Parse_type(fp)) == ERROR) return ERROR;
         if(Check_Standard_Type(TYPE) == ERROR) return error("type is expected integer or boolean or char in formal parameter");
+        /* register ID(localidroot) */
+        if(define_identifer(FORMAL_PARAM, LOCAL_PARAM) == ERROR) return ERROR;
 
     }
 
@@ -919,7 +932,7 @@ void Generate_steps_of_mpl(){
     Case : type is belong to standard  ->   return NORMAL
     Case : type isn't belong to standard -> return ERROR
 */
-int Check_Standard_Type(int TYPE){
+static int Check_Standard_Type(int TYPE){
     
     if(TYPE == TINTEGER || TYPE == TBOOLEAN || TYPE == TCHAR) return NORMAL;
     else return ERROR;
