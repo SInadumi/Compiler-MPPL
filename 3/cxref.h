@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#define FORMAL_PARAM 1
+#define NOT_FORMAL_PARAM 0
+#define GLOBAL_PARAM 1
+#define NOT_GLOBAL_PARAM 0
 
 /*
     TYPE struct has infomation regarding type
@@ -57,9 +61,9 @@ extern void init_global_idtab(void);
 extern void init_local_idtab(void);
 extern struct ID *search_idtab(char *np);
 extern int memorize_name(char *name);
+extern int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct TYPE *tparatp);
 extern int memorize_linenum(int line);
-extern int define_globalid(struct TYPE * itp, char *tpname);
-extern int define_localid(int TYPE);
+extern int define_identifer(char *tpname, int is_formal, int is_global);
 extern void print_idtab(void);
 extern void release_global_idtab(void);
 extern void release_local_idtab(void);

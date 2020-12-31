@@ -98,7 +98,7 @@ int Parse_variable_declaration(FILE *fp){
     if((TYPE = Parse_type(fp)) == ERROR) return ERROR;
 
     // register ID
-    //if(define_globalid(TYPE)) return ERROR;
+    if(define_identifer(NULL, NOT_FORMAL_PARAM, GLOBAL_PARAM)) return ERROR;
 
     if (token != TSEMI) return error("Semicolon is not found in variable declaration statement");
     fprintf(stdout, "%s\n", tokenstr[token]);
@@ -117,6 +117,9 @@ int Parse_variable_declaration(FILE *fp){
 
         /* Parse(type) */
         if((TYPE = Parse_type(fp)) == ERROR) return ERROR;
+
+        /* register ID */
+        if(define_identifer(NULL, NOT_FORMAL_PARAM, GLOBAL_PARAM)) return ERROR;
 
         if (token != TSEMI) return error("Semicolon is not found in variable declaration statement");
         fprintf(stdout, "%s\n", tokenstr[token]);
@@ -167,11 +170,12 @@ int Parse_type(FILE *fp){
 }
 
 int Parse_standard_type(FILE *fp){
-    int TYPE =token;
+    int TYPE = token;
     switch(token){
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
+            memorize_type(token, 0, NULL, NULL);
             fprintf(stdout, "%s ", tokenstr[token]);
             token = scan(fp);
             break;
