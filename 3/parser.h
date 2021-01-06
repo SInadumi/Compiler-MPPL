@@ -51,4 +51,3 @@ extern int Parse_input_statement(FILE *fp);
 extern int Parse_output_statement(FILE *fp);
 extern int Parse_output_format(FILE *fp);
 extern int Parse_empty_statement();
-extern void Generate_steps_of_mpl();

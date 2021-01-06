@@ -79,6 +79,7 @@ extern int memorize_linenum(int line);
 extern int memorize_proc(char *name, int line);
 extern int define_identifer(int is_formal, int is_global);
 extern int reference_identifer(char *name, char *pname, int linenum, int refnum, int is_global);
+void Refacter_to_lexicographical();
 extern int print_cxref_table(void);
 extern void release_global_idtab(void);
 extern void relocate_local_idtab(void);

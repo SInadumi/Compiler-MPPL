@@ -264,12 +264,44 @@ int reference_identifer(char *name, char *pname, int linenum, int refnum, int is
 }
 
 // 辞書式順序へ整形
-// void Refacter_to_lexicographical(){
+int cmp(const void *p, const void *q){
+    fprintf(stdout, "%s ",((struct ID *)p)->name);
+    fprintf(stdout, "%s\n",((struct ID *)q)->name);
+    return (strcmp(((struct ID *)p)->name, ((struct ID *)q)->name));
+}
+void Refacter_to_lexicographical(){
+    struct ID *temp, *p, *q;
+    int max_index = 0;
+    int i,j,k;
+    //fprintf(stdout, "%d", cmp(globalidroot->nextp,globalidroot->nextp->nextp));
+    temp = globalidroot;
+    while(temp != NULL){
+        max_index++;
+        temp = temp->nextp;
+    }
 
-// }
+    for(i = 0; i < max_index - 1; i++){
+        p = globalidroot;
+        q = globalidroot;
+        for(k = 0; k <= i; k++) p = p->nextp;
+        for(j = i; j > max_index - 1; j++){
+            for(k = 0; k <= i; k++) q = q->nextp;
+            if(cmp(p,q) < 0) temp = p;
+            else temp = q;
+        }
+    }
+
+    //         if(cmp(globalidroot, back) > 0){
+
+    //         }
+    //     }
+    // }
+    // qsort(globalidroot, 8, sizeof(struct ID), cmp);
+}
 
 /* print to stdout from globalidroot */
 int print_cxref_table(){
+    Refacter_to_lexicographical();
     struct ID *p;
     struct TYPE *q;
     struct LINE * r;
