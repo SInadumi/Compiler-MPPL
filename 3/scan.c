@@ -16,7 +16,7 @@ static int row_num = 1;         /* number of row */
 static char next_buf = '\0';    /* Look ahead buffer */
 
 /* keyword list */
-keywords key[KEYWORDSIZE] = {
+struct KEYWORDS key[KEYWORDSIZE] = {
 	{"and", 	TAND	},
 	{"array",	TARRAY	},
 	{"begin",	TBEGIN	},

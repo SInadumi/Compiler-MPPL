@@ -1,5 +1,4 @@
-﻿#include "token-list.h"
-#include "parser.h"
+﻿#include "parser.h"
 
 int main(int nc, char *np[]) {
 	FILE *fp;
@@ -25,12 +24,14 @@ int main(int nc, char *np[]) {
 	return is_success;
 }
 
-int error(const char *mes) {
-	printf("\n ERROR: line %d %s\n", get_linenum(), mes);
-	return ERROR;
-}
+int error(const char *mes, ...) {
+	va_list args;
+	char out[MAXSTRSIZE];
+	va_start(args, mes);
+	vsnprintf(out, MAXSTRSIZE, mes, args);
+	va_end(args);
 
-int warning(const char *mes) {
-	printf("\n WARNING: line %d %s\n", get_linenum(), mes);
-	return 0;
+	fflush(stdout);
+	fprintf(stderr, "\n ERROR: line %d %s\n", get_linenum(), out);
+	return ERROR;
 }

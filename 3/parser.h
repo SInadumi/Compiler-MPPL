@@ -3,7 +3,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#define ERROR 1
+#include <stdarg.h>
+#include "token-list.h"
+#include "cxref.h"
+
+#define ERROR -1
 #define NORMAL 0
 
 /* pretty_printer.c */
@@ -30,7 +34,7 @@ extern int Parse_condition_statement(FILE *fp);
 extern int Parse_iteration_statement(FILE *fp);
 extern int Parse_exit_statement(FILE *fp);
 extern int Parse_call_statement(FILE *fp);
-extern int Parse_expressions(FILE *fp);
+extern int Parse_expressions(FILE *fp, struct TYPE *fparams);
 extern int Parse_return_statement(FILE *fp);
 extern int Parse_assignment_statement(FILE *fp);
 extern int Parse_left_part(FILE *fp);

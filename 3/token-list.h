@@ -61,14 +61,13 @@
 
 #define KEYWORDSIZE	28
 
-typedef struct{
+struct KEYWORDS{
 	char *keyword;
 	int keytoken;
-}keywords;
+};
 
 /* utilities */
-extern int error(const char *mes);
-extern int warning(const char *mes);
+extern int error(const char *mes, ...);
 
 /* scan.c */
 extern int num_attr;

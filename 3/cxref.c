@@ -1,21 +1,27 @@
-#include "cxref.h"
 #include "parser.h"
-#include "token-list.h"
 /* Memorize symbol table */
 
 // public
 
+char *type_str[NUMOFTYPE + 1] = {
+    "", "integer", "char", "boolean", "array", "integer", "char", "boolean", "procedule"
+};
+
 // private
 static struct LINE *t_lineroot;
-static struct TYPE *t_type;
+static struct TYPE *t_type ,*paratp_root = NULL;
 static struct NAMES{
     char *formal_name;
     struct NAMES *nextname;
 } *t_namesroot;
-static char *prev_procname;
+static struct PROC{
+    char *prev_procname;
+    int prev_proc_line;
+} *t_proc = NULL;
 
 static void init_formaltab();
 static void release_formaltab();
+static void print_space_to_stdout(int num);
 
 /* Initialize glocalidroot */
 void init_global_idtab(){
@@ -33,7 +39,7 @@ static void init_formaltab(){
     t_lineroot = NULL;
     t_type = NULL;
     t_namesroot = NULL;
-    prev_procname = NULL;
+    paratp_root = NULL;
 }
 
 /* 
@@ -41,23 +47,19 @@ static void init_formaltab(){
     found :     return -> pointer to ID structure
     not found : return -> NULL
 */
-struct ID *search_idtab(char *name, int is_global){
-
+struct ID *search_global_idtab(char *name){
     struct ID *p;
-
-    // search among localidroot
-    if(is_global == LOCAL_PARAM){
-        for(p = localidroot; p != NULL; p = p->nextp){
-            if(strcmp(name, p->name) == 0) return p;
-        }
-    }
-
-    // search among globalidroot
     for(p = globalidroot; p != NULL; p = p->nextp){
         if(strcmp(name, p->name) == 0 && p->procname == NULL) return p;
     }
-
-    return (NULL);
+    return NULL;
+}
+struct ID *search_local_idtab(char *name, char *pname){
+    struct ID *p;
+    for(p = localidroot; p != NULL; p = p->nextp){
+        if(strcmp(name, p->name) == 0 && strcmp(pname, p->procname) == 0) return p;
+    }
+    return NULL;
 }
 
 // NAMES構造体に名前を仮保存
@@ -99,9 +101,6 @@ int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct TYPE *tparatp)
     }
 
     if(tparatp != NULL){
-        if((temp_paratp = (struct TYPE *)malloc(sizeof(struct TYPE))) == NULL){
-            return error("cannot malloc-3 in memorize type");
-        }
         temp_paratp = tparatp;
     }else{
         temp_paratp = NULL;
@@ -128,11 +127,25 @@ int memorize_linenum(int line){
     return NORMAL;
 }
 
-int memorize_procname(char *name){
-    if((prev_procname = (char *)malloc(strlen(name) + 1)) == NULL){
-        return error("cannot malloc in memorize procname");
+int memorize_proc(char *pname, int line){
+    struct PROC *temp_proc;
+    char *tpname;
+    if((temp_proc = (struct PROC *)malloc(sizeof(struct PROC))) == NULL){
+        return error("cannot malloc-1 in memorize procname");
     }
-    strcpy(prev_procname, name);
+    if(pname != NULL){
+        if((tpname = (char *)malloc(strlen(pname) + 1)) == NULL){
+            return error("cannot malloc-2 in memorize procname");
+        }
+        strcpy(tpname, pname);
+    }else{
+        tpname = NULL;
+        //free(temp_proc);
+    }
+    temp_proc->prev_procname = tpname;
+    temp_proc->prev_proc_line = line;
+    t_proc = temp_proc;
+
     return NORMAL;  
 }
 
@@ -143,13 +156,19 @@ int define_identifer(int is_formal, int is_global){
     char *temp_procname;
     struct NAMES *name_p, *name_q;
     struct TYPE *t_itp;
-    struct LINE *t_line;
+    struct LINE *t_line, *t_irefp;
 
     // register loop
     for(name_p = t_namesroot; name_p != NULL; name_p = name_q){
         // Check whether Duplicative name or not
-        if((p = search_idtab(name_p->formal_name, is_global)) != NULL){
-            return error("NAME is already Defined");
+        if(is_global == LOCAL_PARAM){
+            if((p = search_local_idtab(name_p->formal_name, get_prev_procname())) != NULL){
+                return error("%s is already Defined", name_p->formal_name);
+            }
+        }else{
+            if((p = search_global_idtab(name_p->formal_name)) != NULL){
+                return error("%s is already Defined", name_p->formal_name);
+            }
         }
 
         // malloc pointer
@@ -159,8 +178,8 @@ int define_identifer(int is_formal, int is_global){
         if((temp_name = (char *)malloc(strlen(name_p->formal_name) + 1)) == NULL){
             return error("cannot malloc-2 in define globalidroot");
         }
-        if(prev_procname != NULL){
-            if((temp_procname = (char *)malloc(strlen(prev_procname) + 1)) == NULL){
+        if(is_global == LOCAL_PARAM){
+            if((temp_procname = (char *)malloc(strlen(t_proc->prev_procname) + 1)) == NULL){
                 return error("cannot malloc-3 in define globalidroot");
             }
         }else{
@@ -169,11 +188,15 @@ int define_identifer(int is_formal, int is_global){
         if((t_itp = (struct TYPE *)malloc(sizeof(struct TYPE))) == NULL){
             return error("cannot malloc-4 in define globalidroot");
         }
+        if((t_irefp = (struct LINE *)malloc(sizeof(struct LINE))) == NULL){
+            return error("cannot malloc-5 in define globalidroot");
+        }
+        t_irefp = NULL;
         
         // assign temp pointers
         strcpy(temp_name, name_p->formal_name);
-        if(prev_procname != NULL){
-            strcpy(temp_procname, prev_procname);
+        if(is_global == LOCAL_PARAM){
+            strcpy(temp_procname, t_proc->prev_procname);
         }else{
             temp_procname = NULL;
         }
@@ -189,11 +212,15 @@ int define_identifer(int is_formal, int is_global){
             t_line = t_lineroot;
             t_lineroot = t_line;
         }
-        p->irefp = NULL;
-        p->nextp = globalidroot;
+        p->irefp = t_irefp;
 
-        if(is_global) globalidroot = p;
-        else localidroot = p;
+        if(is_global){
+            p->nextp = globalidroot;
+            globalidroot = p;
+        }else{
+            p->nextp = localidroot;
+            localidroot = p;
+        }
 
         name_q = name_p->nextname;
     }
@@ -202,45 +229,184 @@ int define_identifer(int is_formal, int is_global){
     return NORMAL;
 }
 
+int reference_identifer(char *name, char *pname, int linenum, int refnum, int is_global){
+    // refnum is pointer to element if name is array
+    struct ID *p;
+    struct LINE *t_irefp;
+    if(is_global == LOCAL_PARAM){
+        if((p = search_local_idtab(name, pname)) == NULL){ 
+            if((p = search_global_idtab(name)) == NULL){
+                return error("%s(procedule : %s) is not found", name, pname);
+            }
+        }
+    }else{
+        if((p = search_global_idtab(name)) == NULL) return error("%s is not found", name);
+    }
+
+    if((t_irefp = (struct LINE *)malloc(sizeof(struct LINE))) == NULL){
+        return error("cannnot malloc in reference identifer");
+    }
+    t_irefp->reflinenum = linenum;
+    t_irefp->nextep = p->irefp;
+    p->irefp = t_irefp;
+
+    // for(a = p->irefp; a != NULL; a = b){
+    //     b = a->nextep;
+    // }
+    // b = NULL;
+    // if((b = (struct LINE *)malloc(sizeof(struct LINE))) == NULL){
+    //     return error("cannnot malloc in reference identifer");
+    // }
+    // b->reflinenum = refnum;
+    // a = b;
+
+    return NORMAL;
+}
 
 // 辞書式順序へ整形
 // void Refacter_to_lexicographical(){
 
 // }
 
-void print_cxref_table(){
+/* print to stdout from globalidroot */
+int print_cxref_table(){
+    struct ID *p;
+    struct TYPE *q;
+    struct LINE * r;
+    int buf_size = 0;
+    int space = 0;
+    char buf[MAXSTRSIZE];
+    fprintf(stdout, "--------------------------------------------------------------------------\n");
+    fprintf(stdout, "Name");
+    print_space_to_stdout(20);
+    fprintf(stdout, "Type");
+    print_space_to_stdout(23);
+    fprintf(stdout, "Def. Ref.");
+    print_space_to_stdout(14);
+    fprintf(stdout, "\n");
+    for(p = globalidroot; p != NULL; p = p->nextp){
+        // print name:procname
+        if(p->procname != NULL){
+            buf_size = strlen(p->name) + strlen(p->procname);
+            if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
+            sprintf(buf, "%s:%s", p->name, p->procname);
+        }else{
+            buf_size = strlen(p->name);
+            if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
+            sprintf(buf, "%s", p->name);
+        }
+        space = 24 - strlen(buf);
+        fprintf(stdout, "%s", buf);
+        print_space_to_stdout(space);
 
+        // print type
+        space = 27;
+        buf_size = strlen(type_str[p->itp->ttype - 100]);
+        if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
+        
+        if(p->itp->ttype == TPPROC){
+            if(p->itp->paratp != NULL){
+                sprintf(buf, "%s(", type_str[p->itp->ttype - 100]);
+                for(q = p->itp->paratp; q != NULL; q = q->paratp){
+                    buf_size += strlen(type_str[q->ttype - 100]);
+                    if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
+                    if(q->paratp != NULL) sprintf(buf, "%s%s,", buf, type_str[q->ttype - 100]);
+                    else sprintf(buf, "%s%s", buf, type_str[q->ttype - 100]);
+                    buf_size = strlen(buf);
+                }
+                sprintf(buf, "%s)", buf);
+            }else{
+                sprintf(buf, "%s", type_str[p->itp->ttype - 100]);
+            }
+
+        }else if(p->itp->ttype == TPARRAY){
+            sprintf(buf, "%s[", type_str[p->itp->ttype - 100]);
+            // buf_size += strlen(type_str[p->itp->etp->ttype - 100]) + 1;
+            for(q = p->itp->etp; q != NULL; q = q->etp){
+                buf_size += strlen(type_str[q->ttype - 100]) + 1;
+                if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
+                if(q->etp != NULL) sprintf(buf, "%s%s,", buf, type_str[q->ttype - 100]);
+                else sprintf(buf, "%s%s", buf, type_str[q->ttype - 100]);
+                buf_size = strlen(buf);
+            }
+            sprintf(buf, "%s]", buf);
+        }else{
+            sprintf(buf, "%s", type_str[p->itp->ttype - 100]);
+        }
+        buf_size = strlen(buf);
+        space -= buf_size;
+        fprintf(stdout, "%s", buf);
+        print_space_to_stdout(space);
+
+        // print def, ref
+        space = 22;
+        buf_size = 2;
+        sprintf(buf, "%d|", p->deflinenum);
+        for(r = p->irefp; r != NULL; r = r->nextep){
+            buf_size = buf_size + 2;
+            if(r->nextep != NULL) sprintf(buf, "%s%d,", buf, r->reflinenum);
+            else sprintf(buf, "%s%d", buf, r->reflinenum);
+            buf_size = strlen(buf);
+        }
+        buf_size = strlen(buf);
+        space -= buf_size;
+        fprintf(stdout, "%s", buf);
+        print_space_to_stdout(space);
+        fprintf(stdout, "\n");
+    }
+    fprintf(stdout, "--------------------------------------------------------------------------\n");
+    return NORMAL;
 }
 
 void release_global_idtab(){
     struct ID *p, *q;
+    struct TYPE *i, *j;
+    struct LINE *a, *b;
     for(p = globalidroot; p != NULL; p = q){
         free(p->name);
         free(p->procname);
-        free(p->itp);
-        free(p->irefp);
+        // free (paratp in procedule entity)
+        for(i = p->itp; i != NULL; i = j){
+            j = i->paratp;
+            free(i);
+        }
+        // free (iretp in ref line entity)
+        for(a = p->irefp; a != NULL; a = b){
+            b = a->nextep;
+            free(a);
+        }
         q = p->nextp;
         free(p);
     }
+    
+    free(t_proc->prev_procname);
+    free(t_proc);
+    t_proc = NULL;
     init_global_idtab();
 }
 
-void release_local_idtab(){
+void relocate_local_idtab(){
     struct ID *p, *q;
-    struct ID *temp = NULL;
-
-    temp = localidroot;
-    temp->nextp = globalidroot;
-    globalidroot = temp;
-
+    struct ID *temp = localidroot;
+    
     for(p = localidroot; p != NULL; p = q){
-        free(p->name);
-        free(p->procname);
-        free(p->itp);
-        free(p->irefp);
+        if(p->nextp == NULL){
+            p->nextp = globalidroot;
+            break;
+        }
         q = p->nextp;
-        free(p);
     }
+    if(localidroot != NULL) globalidroot = temp;
+
+    if(paratp_root != NULL){
+        if(paratp_root->etp != NULL) free(paratp_root->etp);
+        if(paratp_root->paratp != NULL) free(paratp_root->paratp);
+        free(paratp_root);
+    }
+
+    t_proc->prev_procname = NULL;
+    t_proc->prev_proc_line = -1;
+
     init_local_idtab();
 }
 
@@ -254,15 +420,14 @@ static void release_formaltab(){
     }
 
     if(t_type->etp != NULL) free(t_type->etp);
-    if(t_type->paratp != NULL) free(t_type->paratp);
+    //if(paratp_root == NULL && t_type->paratp != NULL) free(t_type->paratp);
+    free(t_type);
 
     for(p = t_namesroot; p != NULL; p = q){
         free(p->formal_name);
         q = p->nextname;
         free(p);
     }
-    
-    if(prev_procname != NULL) free(prev_procname);
 
     init_formaltab();
 }
@@ -271,4 +436,36 @@ struct TYPE *get_etp_type_structure(){
     // if t_type is NULL, calling func must stop program
     if(t_type != NULL) return t_type;
     else return NULL;
+}
+struct TYPE *get_paratp(char *pname){
+    struct TYPE *tparatp;
+    struct ID *p,*q;
+    for(p = localidroot; p != NULL; p = q){
+        if(p->procname == NULL) continue; 
+        if(strcmp(p->procname, pname) == 0 && p->ispara == FORMAL_PARAM){
+            if((tparatp = (struct TYPE *)malloc(sizeof(struct TYPE))) == NULL){
+                fprintf(stdout, "cannot malloc in get paratp");
+                return NULL;
+            }
+            tparatp->ttype = p->itp->ttype;
+            tparatp->arraysize = 0;
+            tparatp->etp = NULL;
+            tparatp->paratp = paratp_root;
+            paratp_root = tparatp;
+        }
+        q = p->nextp;
+    }
+    return paratp_root;
+}
+char *get_prev_procname(){
+    return t_proc->prev_procname;
+}
+int get_prev_procline(){
+    return t_proc->prev_proc_line;
+}
+static void print_space_to_stdout(int num){
+    int index;
+    for(index = 0; index < num; index++){
+        fprintf(stdout, " ");
+    }
 }
