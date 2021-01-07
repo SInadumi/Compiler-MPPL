@@ -215,9 +215,11 @@ int define_identifer(int is_formal, int is_global){
         p->irefp = t_irefp;
 
         if(is_global){
+            //if(refacter_to_lexicographical(&globalidroot, p) == ERROR) return ERROR;
             p->nextp = globalidroot;
             globalidroot = p;
         }else{
+            //if(refacter_to_lexicographical(&localidroot, p) == ERROR) return ERROR;
             p->nextp = localidroot;
             localidroot = p;
         }
@@ -243,6 +245,8 @@ int reference_identifer(char *name, char *pname, int linenum, int refnum, int is
         if((p = search_global_idtab(name)) == NULL) return error("%s is not found", name);
     }
 
+    if(p->itp->ttype == TPARRAY && p->itp->arraysize <= refnum) return error("Overflow array index");
+
     if((t_irefp = (struct LINE *)malloc(sizeof(struct LINE))) == NULL){
         return error("cannnot malloc in reference identifer");
     }
@@ -264,44 +268,73 @@ int reference_identifer(char *name, char *pname, int linenum, int refnum, int is
 }
 
 // 辞書式順序へ整形
-int cmp(const void *p, const void *q){
-    fprintf(stdout, "%s ",((struct ID *)p)->name);
-    fprintf(stdout, "%s\n",((struct ID *)q)->name);
-    return (strcmp(((struct ID *)p)->name, ((struct ID *)q)->name));
-}
-void Refacter_to_lexicographical(){
-    struct ID *temp, *p, *q;
-    int max_index = 0;
-    int i,j,k;
-    //fprintf(stdout, "%d", cmp(globalidroot->nextp,globalidroot->nextp->nextp));
-    temp = globalidroot;
-    while(temp != NULL){
-        max_index++;
-        temp = temp->nextp;
-    }
+// int cmp(const void *p, const void *q){
+//     return (strcmp(((struct ID *)p)->name, ((struct ID *)q)->name));
+// }
+// void trace(struct ID *id1, struct ID *id2){
+//     id1->name = id2->name;
+//     id1->deflinenum = id2->deflinenum;
+//     id1->procname = id2->procname;
+//     id1->irefp = id2->irefp;
+//     id1->ispara = id2->ispara;
+//     id1->itp = id2->itp;
+//     id1->nextp = NULL;
+// }
+// struct ID *search_idtab(char *name, char *pname){
+//     struct ID *p;
+//     for(p = globalidroot; p != NULL; p = p->nextp){
+//         if(strcmp(name, p->name) == 0 && strcmp(pname, p->procname) == 0) return p;
+//     }
+//     return NULL;
+// }
+// int refacter_to_lexicographical(struct ID **to, struct ID *from){
+//     struct ID *temp, *p, *q, *head;
+//     if(*to == NULL){
+//         *to = from;
+//         (*to)->nextp = NULL;
+//         return NORMAL;
+//     }
+//     for(p = to; p != NULL; p = p->nextp){
+//         if(cmp(p, from) < 0){
+//             from->nextp = p->nextp;
+//             p->nextp = from;
+//             return NORMAL;
+//         }
+//     }
+//     (*to)->nextp = from;
+//     from->nextp = NULL;
+//     // int max_index = 0;
 
-    for(i = 0; i < max_index - 1; i++){
-        p = globalidroot;
-        q = globalidroot;
-        for(k = 0; k <= i; k++) p = p->nextp;
-        for(j = i; j > max_index - 1; j++){
-            for(k = 0; k <= i; k++) q = q->nextp;
-            if(cmp(p,q) < 0) temp = p;
-            else temp = q;
-        }
-    }
+//     // temp = id;
 
-    //         if(cmp(globalidroot, back) > 0){
+//     // temp = NULL;
+//     // if((temp = (struct ID *)malloc(sizeof(struct ID))) == NULL){
+//     //     return error("cannot malloc in refactor id");
+//     // }
+//     // head = temp;
+//     // for(p = globalidroot; p != NULL; p = p->nextp){
+//     //     trace(temp, p);
+//     //     for(q = p->nextp; q != NULL; q = q->nextp){
+//     //         if(cmp(temp,q) > 0){
+//     //             trace(temp, q);
+//     //         }
+//     //     }
+//     //     if((temp->nextp = (struct ID *)malloc(sizeof(struct ID))) == NULL){
+//     //         return error("cannot malloc in refactor id");
+//     //     }
+//     //     temp = temp->nextp;
+//     //     if(temp->name != p->name && temp->procname != p->procname){
+//     //         (search_idtab(temp->name, temp->procname))->nextp = p;
 
-    //         }
-    //     }
-    // }
-    // qsort(globalidroot, 8, sizeof(struct ID), cmp);
-}
+//     //     }
+//     // }
+//     // globalidroot = head;
+
+//     return NORMAL;
+// }
 
 /* print to stdout from globalidroot */
 int print_cxref_table(){
-    Refacter_to_lexicographical();
     struct ID *p;
     struct TYPE *q;
     struct LINE * r;
@@ -451,7 +484,7 @@ static void release_formaltab(){
         free(i);
     }
 
-    if(t_type->etp != NULL) free(t_type->etp);
+    //if(t_type->etp != NULL) free(t_type->etp);
     //if(paratp_root == NULL && t_type->paratp != NULL) free(t_type->paratp);
     free(t_type);
 

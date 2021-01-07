@@ -14,9 +14,9 @@
 #define TPCHAR 102
 #define TPBOOL 103
 #define TPARRAY 104
-#define TPARRAYINT 105
-#define TPARRAYCHAR 106
-#define TPARRAYBOOL 107
+// #define TPARRAYINT 105
+// #define TPARRAYCHAR 106
+// #define TPARRAYBOOL 107
 #define TPPROC 108
 
 extern char *type_str[NUMOFTYPE + 1];
@@ -79,12 +79,11 @@ extern int memorize_linenum(int line);
 extern int memorize_proc(char *name, int line);
 extern int define_identifer(int is_formal, int is_global);
 extern int reference_identifer(char *name, char *pname, int linenum, int refnum, int is_global);
-void Refacter_to_lexicographical();
+extern int refacter_to_lexicographical(struct ID **to, struct ID *from);
 extern int print_cxref_table(void);
 extern void release_global_idtab(void);
 extern void relocate_local_idtab(void);
-extern void release_procname(void);
-extern struct TYPE *get_etp_type_structure();
+extern struct TYPE *get_etp_type_structure(void);
 extern struct TYPE *get_paratp(char *pname);
-extern char *get_prev_procname();
-extern int get_prev_procline();
+extern char *get_prev_procname(void);
+extern int get_prev_procline(void);

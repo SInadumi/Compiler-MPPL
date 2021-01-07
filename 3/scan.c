@@ -53,6 +53,7 @@ struct KEYWORDS key[KEYWORDSIZE] = {
     Case : successed :     -> return 0
 */
 int init_scan(char *filename, FILE **fp){
+    num_attr = 0;
     *fp = fopen(filename, "r");
     if(*fp == NULL) return -1;
     next_buf = (char)fgetc(*fp);
