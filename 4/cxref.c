@@ -1,4 +1,4 @@
-#include "parser.h"
+#include "mppl_compiler.h"
 /* Memorize symbol table */
 
 /* public */
@@ -36,7 +36,6 @@ void init_local_idtab(){
     init_formaltab();
 }
 
-/* Initialize private table */
 static void init_formaltab(){
     t_lineroot = NULL;
     t_type = NULL;
@@ -45,7 +44,7 @@ static void init_formaltab(){
 }
 
 /* 
-    search the name pointed by global id table
+    search the name pointed by np 
     found :     return -> pointer to ID structure
     not found : return -> NULL
 */
@@ -56,12 +55,6 @@ struct ID *search_global_idtab(char *name){
     }
     return NULL;
 }
-
-/* 
-    search the name pointed by local id table
-    found :     return -> pointer to ID structure
-    not found : return -> NULL
-*/
 struct ID *search_local_idtab(char *name, char *pname){
     struct ID *p;
     for(p = localidroot; p != NULL; p = p->nextp){
@@ -155,9 +148,7 @@ int memorize_proc(char *pname, int line){
     return NORMAL;  
 }
 
-/*
-    is_global -> 1 : globalidtable, is_global -> 0 : localidtable
-*/
+// ID構造体に保存(is_global -> 1 : globalid, is_global -> 0 : localid)
 int define_identifer(int is_formal, int is_global){
     struct ID *p;
     char *temp_name;
@@ -262,6 +253,7 @@ int reference_identifer(char *name, char *pname, int linenum, int refnum, int is
     return NORMAL;
 }
 
+// 辞書式順序へ整形
 int compare_names(const void *p, const void *q){
     // p->name > q->name then plus num
     // p->name < q->name then minus num 
@@ -416,12 +408,9 @@ void release_global_idtab(){
 }
 
 void relocate_local_idtab(){
-    struct ID *p, *q;
     struct ID *temp = localidroot;
     
     globalidroot = refacter_to_lexicographical(globalidroot, localidroot);
-    //q = p->nextp;
-    //if(localidroot != NULL) globalidroot = temp;
 
     if(paratp_root != NULL){
         if(paratp_root->etp != NULL) free(paratp_root->etp);

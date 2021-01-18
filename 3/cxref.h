@@ -8,8 +8,6 @@
 #define GLOBAL_PARAM 1
 #define LOCAL_PARAM 0
 
-#define NUMOFTYPE 8
-
 #define TPINT 101
 #define TPCHAR 102
 #define TPBOOL 103
@@ -18,6 +16,7 @@
 // #define TPARRAYCHAR 106
 // #define TPARRAYBOOL 107
 #define TPPROC 108
+#define NUMOFTYPE 8
 
 extern char *type_str[NUMOFTYPE + 1];
 
