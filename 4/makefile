@@ -1,5 +1,5 @@
 PROGRAM = ../Compiler
-OBJS = main.o scan.o parser.o cxref.o
+OBJS = main.o scan.o parser.o cxref.o mppl_compiler.o
 CC = gcc
 CFLAGS = -g -Wall -Wextra
 
@@ -18,3 +18,4 @@ main.o : mppl_compiler.h main.c
 scan.o : mppl_compiler.h scan.c
 parser.o : mppl_compiler.h parser.c
 cxref.o : mppl_compiler.h cxref.c
+mppl_compiler.o : mppl_compiler.h mppl_compiler.c

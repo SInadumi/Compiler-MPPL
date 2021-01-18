@@ -1,5 +1,6 @@
 
-#pragma once
+#ifndef MPPL_H_
+#define MPPL_H_
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -8,6 +9,7 @@
 
 #define MAXSTRSIZE 1024
 #define MAXNUMSIZE 32767
+#define MAXLABELSIZE 6
 
 #define ERROR -1
 #define NORMAL 0
@@ -132,7 +134,8 @@ struct ID{
     struct ID *nextp;
 }*globalidroot, *localidroot;
 
-/* utilities */
+/* main.c */
+extern FILE *input, *output;
 extern int error(const char *mes, ...);
 
 /* scan.c */
@@ -146,39 +149,39 @@ extern void end_scan(FILE *fp);
 /* parser.c */
 #define NUMOFTOKEN	49
 extern char *tokenstr[NUMOFTOKEN+1]; /* string of each token */
-extern int Parse_program(FILE *fp);
-extern int Parse_block(FILE *fp);
-extern int Parse_variable_declaration(FILE *fp);
-extern int Parse_variable_names(FILE *fp);
-extern int Parse_variable_name(FILE *fp);
-extern int Parse_type(FILE *fp);
-extern int Parse_standard_type(FILE *fp);
-extern int Parse_array_type(FILE *fp);
-extern int Parse_subprogram_declaration(FILE *fp);
-extern int Parse_procedule_name(FILE *fp);
-extern int Parse_formal_parameters(FILE *fp);
-extern int Parse_compound_statement(FILE *fp);
-extern int Parse_statement(FILE *fp);
-extern int Parse_condition_statement(FILE *fp);
-extern int Parse_iteration_statement(FILE *fp);
-extern int Parse_exit_statement(FILE *fp);
-extern int Parse_call_statement(FILE *fp);
-extern int Parse_expressions(FILE *fp, struct TYPE *fparams);
-extern int Parse_return_statement(FILE *fp);
-extern int Parse_assignment_statement(FILE *fp);
-extern int Parse_left_part(FILE *fp);
-extern int Parse_variable(FILE *fp);
-extern int Parse_expression(FILE *fp);
-extern int Parse_simple_expression(FILE *fp);
-extern int Parse_term(FILE *fp);
-extern int Parse_factor(FILE *fp);
-extern int Parse_constant(FILE *fp);
-extern int Parse_multiplicative_operator(FILE *fp);
-extern int Parse_additive_operator(FILE *fp);
-extern int Parse_relational_operator(FILE *fp);
-extern int Parse_input_statement(FILE *fp);
-extern int Parse_output_statement(FILE *fp);
-extern int Parse_output_format(FILE *fp);
+extern int Parse_program();
+extern int Parse_block();
+extern int Parse_variable_declaration();
+extern int Parse_variable_names();
+extern int Parse_variable_name();
+extern int Parse_type();
+extern int Parse_standard_type();
+extern int Parse_array_type();
+extern int Parse_subprogram_declaration();
+extern int Parse_procedule_name();
+extern int Parse_formal_parameters();
+extern int Parse_compound_statement();
+extern int Parse_statement();
+extern int Parse_condition_statement();
+extern int Parse_iteration_statement();
+extern int Parse_exit_statement();
+extern int Parse_call_statement();
+extern int Parse_expressions(struct TYPE *fparams);
+extern int Parse_return_statement();
+extern int Parse_assignment_statement();
+extern int Parse_left_part();
+extern int Parse_variable();
+extern int Parse_expression();
+extern int Parse_simple_expression();
+extern int Parse_term();
+extern int Parse_factor();
+extern int Parse_constant();
+extern int Parse_multiplicative_operator();
+extern int Parse_additive_operator();
+extern int Parse_relational_operator();
+extern int Parse_input_statement();
+extern int Parse_output_statement();
+extern int Parse_output_format();
 extern int Parse_empty_statement();
 
 /* cxref.c */
@@ -201,3 +204,11 @@ extern struct TYPE *get_etp_type_structure(void);
 extern struct TYPE *get_paratp(char *pname);
 extern char *get_prev_procname(void);
 extern int get_prev_procline(void);
+
+/* mppl_compiler.c */
+extern int init_outfile(char *filename, FILE **out);
+extern void end_outfile(FILE *out);
+int create_label(char **label);
+extern int inst_start(char *program_name, char **st_label);
+
+#endif
