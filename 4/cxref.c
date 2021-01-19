@@ -2,7 +2,8 @@
 /* Memorize symbol table */
 
 /* public */
-
+struct ID *globalidroot = NULL;
+struct ID *localidroot = NULL;
 char *type_str[NUMOFTYPE + 1] = {
     "", "integer", "char", "boolean", "array", "integer", "char", "boolean", "procedule"
 };
@@ -219,6 +220,9 @@ int define_identifer(int is_formal, int is_global){
             localidroot = refacter_to_lexicographical(localidroot, p);
         }
 
+        /* write ID labels in output */
+        print_id_label(p);
+        
         name_q = name_p->nextname;
     }
     

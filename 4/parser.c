@@ -37,7 +37,7 @@ int Parse_program(){
     token = scan();
 
     /* Parse(block) */
-    if(Parse_block() == ERROR) return ERROR;
+    if(Parse_block(st_label) == ERROR) return ERROR;
  
     if(token != TDOT) return error("Colon is not found in program statement");
     token = scan();
@@ -48,10 +48,13 @@ int Parse_program(){
     /* release global id table */
     release_global_idtab();
 
+    /* write 'END' in output */
+    inst_close_program();
+
     return NORMAL; 
 }
 
-int Parse_block(){
+int Parse_block(char *st_label){
     /* repeat variable declaration or subproblem declaration */
     while(token == TVAR || token == TPROCEDURE){
 
@@ -60,11 +63,12 @@ int Parse_block(){
             if(Parse_variable_declaration() == ERROR) return ERROR;
         }else if(token == TPROCEDURE){
             is_global = LOCAL_PARAM;
-            if(Parse_subprogram_declaration(
-            ) == ERROR) return ERROR;
+            if(Parse_subprogram_declaration() == ERROR) return ERROR;
         }else return error("'var' or 'procedure' is not found");
         
     }
+
+    print_labelname(st_label);
 
     /* check compound statement */
     is_global = GLOBAL_PARAM;
@@ -89,6 +93,7 @@ int Parse_variable_declaration(){
 
     // register ID(globalidroot)
     if(define_identifer(NOT_FORMAL_PARAM, is_global) == ERROR) return ERROR;
+
 
     if (token != TSEMI) return error("Semicolon is not found in variable declaration statement");
     token = scan();
@@ -227,7 +232,7 @@ int Parse_subprogram_declaration(){
     memorize_linenum(get_prev_procline());
     memorize_type(TPPROC, 0, NULL, param_types);
     define_identifer(NOT_FORMAL_PARAM, GLOBAL_PARAM);
-    
+
     /* Parse(compound statement) */
     if(Parse_compound_statement() == ERROR) return ERROR;    
 
@@ -262,6 +267,7 @@ int Parse_formal_parameters(){
 
     if((TYPE = Parse_type()) == ERROR) return ERROR;
     if(Check_Standard_Type(TYPE) == ERROR) return error("type is expected integer or boolean or char in formal parameter");
+    
     /* register ID(localidroot) */
     if(define_identifer(FORMAL_PARAM, is_global) == ERROR) return ERROR;
 
@@ -275,6 +281,7 @@ int Parse_formal_parameters(){
 
         if((TYPE = Parse_type()) == ERROR) return ERROR;
         if(Check_Standard_Type(TYPE) == ERROR) return error("type is expected integer or boolean or char in formal parameter");
+        
         /* register ID(localidroot) */
         if(define_identifer(FORMAL_PARAM, is_global) == ERROR) return ERROR;
 

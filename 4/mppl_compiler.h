@@ -132,7 +132,7 @@ struct ID{
     int deflinenum;
     struct LINE *irefp;
     struct ID *nextp;
-}*globalidroot, *localidroot;
+};
 
 /* main.c */
 extern FILE *input, *output;
@@ -150,7 +150,7 @@ extern void end_scan(FILE *input);
 #define NUMOFTOKEN	49
 extern char *tokenstr[NUMOFTOKEN+1]; /* string of each token */
 extern int Parse_program();
-extern int Parse_block();
+extern int Parse_block(char *st_label);
 extern int Parse_variable_declaration();
 extern int Parse_variable_names();
 extern int Parse_variable_name();
@@ -185,6 +185,8 @@ extern int Parse_output_format();
 extern int Parse_empty_statement();
 
 /* cxref.c */
+extern struct ID *globalidroot;
+extern struct ID *localidroot;
 extern char *type_str[NUMOFTYPE + 1];
 extern void init_global_idtab(void);
 extern void init_local_idtab(void);
@@ -208,7 +210,10 @@ extern int get_prev_procline(void);
 /* mppl_compiler.c */
 extern int init_outfile(char *filename, FILE **out);
 extern void end_outfile(FILE *out);
-int create_label(char **label);
+extern int create_label(char **label);
+extern void print_labelname(char *label);
+extern int print_id_label(struct ID *p);
 extern int inst_start(char *program_name, char **st_label);
+extern void inst_close_program();
 
 #endif
