@@ -5,11 +5,11 @@ int num_attr = 0;
 char string_attr[MAXSTRSIZE];
 
 /* private */
-static int Skip_Keyword(char element, FILE *fp);
+static int Skip_Keyword(char element);
 static int Check_Keyword(char *elements);
-static int Skip_Digits(char attr_element, FILE *fp);
-static int Skip_String(char string_element, FILE *fp);
-static int Skip_Comment(char skip_character, FILE *fp);
+static int Skip_Digits(char attr_element);
+static int Skip_String(char string_element);
+static int Skip_Comment(char skip_character);
 static void Reset_val(void);
 
 static int row_num = 1;         /* number of row */
@@ -52,11 +52,13 @@ struct KEYWORDS key[KEYWORDSIZE] = {
     Case : file open error -> return -1
     Case : successed :     -> return 0
 */
-int init_scan(char *filename, FILE **fp){
+int init_scan(char *filename, FILE **input){
     num_attr = 0;
-    *fp = fopen(filename, "r");
-    if(*fp == NULL) return -1;
-    next_buf = (char)fgetc(*fp);
+    *input = fopen(filename, "r");
+    if(*input == NULL){
+        return error("%s can not open", filename);
+    }
+    next_buf = (char)fgetc(*input);
     return 0;
 }
 
@@ -67,7 +69,7 @@ int init_scan(char *filename, FILE **fp){
     Case : content is digit string -> return digit string
     Case : EOF or Error            -> return -1
 */
-int scan(FILE *fp){
+int scan(){
     char now_buf;
     int token_code = 0;
 
@@ -78,7 +80,7 @@ int scan(FILE *fp){
 
         now_buf = next_buf;
         
-        next_buf = fgetc(fp);
+        next_buf = fgetc(input);
 
         if(now_buf == EOF) return -1;
         
@@ -89,20 +91,20 @@ int scan(FILE *fp){
             if(next_buf == '>') token_code = TNOTEQ;
             else if(next_buf == '=') token_code = TLEEQ;
             
-            if(next_buf == '>' || next_buf == '=') next_buf = fgetc(fp);
+            if(next_buf == '>' || next_buf == '=') next_buf = fgetc(input);
             break;
 
         case '>':
             token_code = TGR;
             if(next_buf == '='){
-                next_buf = fgetc(fp);
+                next_buf = fgetc(input);
                 token_code = TGREQ;
             }
             break;
         case ':':
             token_code = TCOLON;
             if(next_buf == '='){
-                next_buf = fgetc(fp);
+                next_buf = fgetc(input);
                 token_code = TASSIGN;
             }
             break;
@@ -146,33 +148,33 @@ int scan(FILE *fp){
             break;
         case '\n':
             row_num++;
-            if(next_buf == '\r') next_buf = fgetc(fp);
+            if(next_buf == '\r') next_buf = fgetc(input);
             break;
         case '\r':
             row_num++;
-            if(next_buf == '\n') next_buf = fgetc(fp);
+            if(next_buf == '\n') next_buf = fgetc(input);
             break;
 
         // string
         case (char)39:  
-            token_code = Skip_String(now_buf, fp);
+            token_code = Skip_String(now_buf);
             break;
 
         default:   
             /* comment */
             if((now_buf == '/' && next_buf == '*') || now_buf == '{'){
-                token_code = Skip_Comment(now_buf, fp);
+                token_code = Skip_Comment(now_buf);
                 break;
             }
             /* name or keyword */
             if((int)now_buf >= (int)'A' && (int)now_buf <= (int)'z'){
-                token_code = Skip_Keyword(now_buf, fp);
+                token_code = Skip_Keyword(now_buf);
                 break;
             }
 
             /* digit */
             if((int)now_buf >= (int)'0' && (int)now_buf <= (int)'9'){
-                token_code = Skip_Digits(now_buf, fp);
+                token_code = Skip_Digits(now_buf);
                 break;
             }
 
@@ -190,7 +192,7 @@ int scan(FILE *fp){
     Success:    keyword's token code or TNAME
     Error:      -1
 */
-static int Skip_Keyword(char element, FILE *fp){
+static int Skip_Keyword(char element){
     int token = TNAME;
     int total_word_element = 0;
     string_attr[total_word_element++] = element;
@@ -203,7 +205,7 @@ static int Skip_Keyword(char element, FILE *fp){
         if(total_word_element >= MAXSTRSIZE) break;
 
         string_attr[total_word_element++] = element;
-        element = fgetc(fp);
+        element = fgetc(input);
     
     }
 
@@ -215,7 +217,7 @@ static int Skip_Keyword(char element, FILE *fp){
         if(total_word_element >= MAXSTRSIZE) break;
 
         string_attr[total_word_element++] = element;
-        element = fgetc(fp);
+        element = fgetc(input);
 
     }
     
@@ -251,13 +253,13 @@ static int Check_Keyword(char *elements){
     Success:    TSTRING
     Error:      -1   
 */
-static int Skip_String(char string_element, FILE *fp){
+static int Skip_String(char string_element){
     int total_string_element = 0;
 
     /* Input String to string_attr */
     while(string_element != EOF){
         string_element = next_buf;
-        next_buf = fgetc(fp);
+        next_buf = fgetc(input);
 
         /* If Input element is '\r' or '\n' */
         if(string_element == '\r' || string_element == '\n') continue;
@@ -273,7 +275,7 @@ static int Skip_String(char string_element, FILE *fp){
             if(next_buf != (char)39) return TSTRING;
             string_attr[total_string_element++] = string_element;
             string_element = next_buf;
-            next_buf = fgetc(fp);
+            next_buf = fgetc(input);
         }
 
         string_attr[total_string_element++] = string_element;
@@ -289,7 +291,7 @@ static int Skip_String(char string_element, FILE *fp){
     Success:    TNUMBER
     Error:      -1
 */
-static int Skip_Digits(char attr_element, FILE *fp){
+static int Skip_Digits(char attr_element){
     int total_attr_element = 0;
     string_attr[total_attr_element++] = attr_element;
     attr_element = next_buf;
@@ -298,7 +300,7 @@ static int Skip_Digits(char attr_element, FILE *fp){
     while((int)attr_element >= (int)'0' && (int)attr_element <= (int)'9'){
         if(total_attr_element >= MAXSTRSIZE) break;
         string_attr[total_attr_element++] = attr_element;
-        attr_element = fgetc(fp);
+        attr_element = fgetc(input);
     }
 
     /* Update num_attr */
@@ -317,14 +319,14 @@ static int Skip_Digits(char attr_element, FILE *fp){
     Success:    return 0
     Error:      return -1
 */
-static int Skip_Comment(char skip_character, FILE *fp){
+static int Skip_Comment(char skip_character){
     char init_character = skip_character;
 
     while(skip_character != EOF){
         skip_character = next_buf;
-        next_buf = fgetc(fp);
+        next_buf = fgetc(input);
         if(skip_character == '*' && next_buf == '/' && init_character == '/'){
-            next_buf = fgetc(fp);
+            next_buf = fgetc(input);
             return 0;
         }
         if(skip_character == '}' && init_character == '{'){
@@ -350,6 +352,6 @@ int get_linenum(){
     return row_num;
 }
 
-void end_scan(FILE *fp){
-    fclose(fp);
+void end_scan(FILE *input){
+    fclose(input);
 }

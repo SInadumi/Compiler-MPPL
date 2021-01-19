@@ -1,26 +1,30 @@
 ﻿#include "mppl_compiler.h"
 
+FILE *input, *output;
 int main(int nc, char *np[]) {
-	FILE *fp;
-	int is_success = EXIT_SUCCESS;
+
+	int is_success = EXIT_FAILURE;
 
 	/* File Open */
     if(nc < 2) {
 		error("File name is not given.");
-		return 0;
+		return is_success;
     }
 
-    if(init_scan(np[1], &fp) < 0) {
-		error("File can not open.");
-		return 0;
+    if(init_scan(np[1], &input) == ERROR) {
+		return is_success;
     }
+
+	if(init_outfile(np[1], &output) == ERROR){
+		return is_success;
+	}
 
 	/* Parse(program) */
-	is_success = Parse_program(fp);
+	is_success = Parse_program();
 
-	/*Release memory */
-	end_scan(fp);
-    
+	end_scan(input);
+	end_outfile(output);
+
 	return is_success;
 }
 

@@ -229,7 +229,7 @@ int define_identifer(int is_formal, int is_global){
 int reference_identifer(char *name, char *pname, int linenum, int refnum, int is_global){
     /* refnum is pointer to element if name is array */
     struct ID *p;
-    struct LINE *t_irefp, *last;
+    struct LINE *t_irefp;
     if(is_global == LOCAL_PARAM){
         if((p = search_local_idtab(name, pname)) == NULL){ 
             if((p = search_global_idtab(name)) == NULL){
@@ -297,7 +297,8 @@ int print_cxref_table(){
     struct LINE * r;
     int buf_size = 0;
     int space = 0;
-    char buf[MAXSTRSIZE];
+    char from_buf[MAXSTRSIZE - 100];
+    char to_buf[MAXSTRSIZE];
     fprintf(stdout, "--------------------------------------------------------------------------\n");
     fprintf(stdout, "Name");
     print_space_to_stdout(20);
@@ -311,14 +312,14 @@ int print_cxref_table(){
         if(p->procname != NULL){
             buf_size = strlen(p->name) + strlen(p->procname);
             if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
-            sprintf(buf, "%s:%s", p->name, p->procname);
+            snprintf(to_buf, MAXSTRSIZE, "%s:%s", p->name, p->procname);
         }else{
             buf_size = strlen(p->name);
             if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
-            sprintf(buf, "%s", p->name);
+            snprintf(to_buf, MAXSTRSIZE, "%s", p->name);
         }
-        space = 24 - strlen(buf);
-        fprintf(stdout, "%s", buf);
+        space = 24 - strlen(to_buf);
+        fprintf(stdout, "%s", to_buf);
         print_space_to_stdout(space);
 
         // print type
@@ -328,51 +329,56 @@ int print_cxref_table(){
         
         if(p->itp->ttype == TPPROC){
             if(p->itp->paratp != NULL){
-                sprintf(buf, "%s(", type_str[p->itp->ttype - 100]);
+                snprintf(to_buf, MAXSTRSIZE, "%s(", type_str[p->itp->ttype - 100]);
                 for(q = p->itp->paratp; q != NULL; q = q->paratp){
+                    strncpy(from_buf, to_buf, MAXSTRSIZE - 100);
                     buf_size += strlen(type_str[q->ttype - 100]);
                     if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
-                    if(q->paratp != NULL) sprintf(buf, "%s%s,", buf, type_str[q->ttype - 100]);
-                    else sprintf(buf, "%s%s", buf, type_str[q->ttype - 100]);
-                    buf_size = strlen(buf);
+                    if(q->paratp != NULL) snprintf(to_buf, MAXSTRSIZE, "%s%s,", from_buf, type_str[q->ttype - 100]);
+                    else snprintf(to_buf, MAXSTRSIZE,"%s%s", from_buf, type_str[q->ttype - 100]);
+                    buf_size = strlen(to_buf);
                 }
-                sprintf(buf, "%s)", buf);
+                strncpy(from_buf, to_buf, MAXSTRSIZE - 100);
+                snprintf(to_buf, MAXSTRSIZE,"%s)", from_buf);
             }else{
-                sprintf(buf, "%s", type_str[p->itp->ttype - 100]);
+                snprintf(to_buf, MAXSTRSIZE, "%s", type_str[p->itp->ttype - 100]);
             }
 
         }else if(p->itp->ttype == TPARRAY){
-            sprintf(buf, "%s[", type_str[p->itp->ttype - 100]);
+            snprintf(to_buf, MAXSTRSIZE, "%s[", type_str[p->itp->ttype - 100]);
             // buf_size += strlen(type_str[p->itp->etp->ttype - 100]) + 1;
             for(q = p->itp->etp; q != NULL; q = q->etp){
+                strncpy(from_buf, to_buf, MAXSTRSIZE - 100);
                 buf_size += strlen(type_str[q->ttype - 100]) + 1;
                 if(buf_size >= MAXSTRSIZE) return error("Overflow to print stdout");
-                if(q->etp != NULL) sprintf(buf, "%s%s,", buf, type_str[q->ttype - 100]);
-                else sprintf(buf, "%s%s", buf, type_str[q->ttype - 100]);
-                buf_size = strlen(buf);
+                if(q->etp != NULL) snprintf(to_buf, MAXSTRSIZE, "%s%s,", from_buf, type_str[q->ttype - 100]);
+                else snprintf(to_buf, MAXSTRSIZE, "%s%s", from_buf, type_str[q->ttype - 100]);
+                buf_size = strlen(to_buf);
             }
-            sprintf(buf, "%s]", buf);
+            strncpy(from_buf, to_buf, MAXSTRSIZE - 100);
+            snprintf(to_buf, MAXSTRSIZE, "%s]", from_buf);
         }else{
-            sprintf(buf, "%s", type_str[p->itp->ttype - 100]);
+            snprintf(to_buf, MAXSTRSIZE, "%s", type_str[p->itp->ttype - 100]);
         }
-        buf_size = strlen(buf);
+        buf_size = strlen(to_buf);
         space -= buf_size;
-        fprintf(stdout, "%s", buf);
+        fprintf(stdout, "%s", to_buf);
         print_space_to_stdout(space);
 
         // print def, ref
         space = 22;
         buf_size = 2;
-        sprintf(buf, "%d|", p->deflinenum);
+        snprintf(to_buf, MAXSTRSIZE, "%d|", p->deflinenum);
         for(r = p->irefp; r != NULL; r = r->nextep){
+            strncpy(from_buf, to_buf, MAXSTRSIZE - 100);
             buf_size = buf_size + 2;
-            if(r->nextep != NULL) sprintf(buf, "%s%d,", buf, r->reflinenum);
-            else sprintf(buf, "%s%d", buf, r->reflinenum);
-            buf_size = strlen(buf);
+        if(r->nextep != NULL) snprintf(to_buf, MAXSTRSIZE,"%s%d,", from_buf, r->reflinenum);
+            else snprintf(to_buf, MAXSTRSIZE, "%s%d", from_buf, r->reflinenum);
+            buf_size = strlen(to_buf);
         }
-        buf_size = strlen(buf);
+        buf_size = strlen(to_buf);
         space -= buf_size;
-        fprintf(stdout, "%s", buf);
+        fprintf(stdout, "%s", to_buf);
         print_space_to_stdout(space);
         fprintf(stdout, "\n");
     }
@@ -408,7 +414,6 @@ void release_global_idtab(){
 }
 
 void relocate_local_idtab(){
-    struct ID *temp = localidroot;
     
     globalidroot = refacter_to_lexicographical(globalidroot, localidroot);
 

@@ -141,10 +141,10 @@ extern int error(const char *mes, ...);
 /* scan.c */
 extern int num_attr;
 extern char string_attr[MAXSTRSIZE];
-extern int init_scan(char *filename, FILE **fp);
-extern int scan(FILE *fp);
+extern int init_scan(char *filename, FILE **input);
+extern int scan();
 extern int get_linenum(void);
-extern void end_scan(FILE *fp);
+extern void end_scan(FILE *input);
 
 /* parser.c */
 #define NUMOFTOKEN	49
