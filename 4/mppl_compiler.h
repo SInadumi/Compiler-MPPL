@@ -82,6 +82,44 @@
 #define	TBREAK		49	/* break : Keyword */
 #define KEYWORDSIZE	28
 
+/* Instruction set */
+#define EOVF 201
+#define EOVF1 202
+#define E0DIV 203
+#define E0DIV1 204
+#define EROV  205
+#define EROV1 206
+#define WRITECHAR 207
+#define WRITESTR 208
+#define BOVFCHECK 209
+#define BOVFLEVEL 210
+#define WRITEINT 211
+#define MMINT 212
+#define WRITEBOOL 213
+#define WBTRUE 214
+#define WBFALSE 215
+#define WRITELINE 216
+#define FLUSH 217
+#define READCHAR 218
+#define READINT 219
+#define READLINE 220
+#define ONE 221
+#define SIX 222
+#define TEN 223
+#define SPACE 224
+#define MINUS 225
+#define TAB 226
+#define ZERO 227
+#define NINE 228
+#define NEWLINE 229
+#define INTBUF 230
+#define OBUFSIZE 231
+#define IBUFSIZE 232
+#define INP 233
+#define OBUF 234
+#define IBUF 235
+#define RPBBUF 236
+
 struct KEYWORDS{
 	char *keyword;
 	int keytoken;
@@ -132,6 +170,12 @@ struct ID{
     int deflinenum;
     struct LINE *irefp;
     struct ID *nextp;
+};
+
+struct PARAM{
+    struct ID *prev;
+    struct ID *now;
+    struct ID *next;
 };
 
 /* main.c */
@@ -208,6 +252,7 @@ extern char *get_prev_procname(void);
 extern int get_prev_procline(void);
 
 /* mppl_compiler.c */
+extern struct PARAM *params;
 extern int init_outfile(char *filename, FILE **out);
 extern void end_outfile(FILE *out);
 extern int create_label(char **label);
@@ -215,5 +260,12 @@ extern void print_labelname(char *label);
 extern int print_id_label(struct ID *p);
 extern int inst_start(char *program_name, char **st_label);
 extern void inst_close_program();
-
+extern void inst_return();
+extern int inst_write();
+extern int inst_write_string();
+extern int inst_write_line();
+extern void inst_read_integer();
+extern void inst_read_char();
+extern void inst_read_line();
+extern void INSTRUCTIONS();
 #endif

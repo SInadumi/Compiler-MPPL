@@ -74,6 +74,9 @@ int Parse_block(char *st_label){
     is_global = GLOBAL_PARAM;
     if(Parse_compound_statement() == ERROR) return ERROR;
 
+    /* write 'RET' in output */
+    inst_return();
+
     return NORMAL; 
 }
 
@@ -241,6 +244,9 @@ int Parse_subprogram_declaration(){
 
     /* release local idtab */
     relocate_local_idtab();
+
+    /* write 'RET' in output */
+    inst_return();
 
     return NORMAL;
 }
@@ -470,6 +476,9 @@ int Parse_expressions(struct TYPE *fparams){
 int Parse_return_statement(){
     if(token != TRETURN) return error("'return' is not found");
     token = scan();
+    
+    /* write 'RET' in output */
+    inst_return();
 
     return NORMAL;
 }

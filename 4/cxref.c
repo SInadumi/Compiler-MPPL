@@ -269,6 +269,8 @@ struct ID *refacter_to_lexicographical(struct ID *to, struct ID *from){
     if(to == NULL){
         to = from;
         return to;
+    }else if(from == NULL){
+        return to;
     }
     
     /* Select Head pointer */
