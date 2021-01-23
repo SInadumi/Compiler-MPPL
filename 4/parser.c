@@ -15,6 +15,7 @@ static int is_empty = 0;    // Does Exist empty statement
 static int is_iterate = 0;  // Judge whether this is scanning of iteration statement or not
 static int token = 0;       // Token code Buffer
 static int is_global = GLOBAL_PARAM;
+static char label_exit[MAXSTRSIZE];
 
 static int Check_Standard_Type(int TYPE);
 
@@ -379,6 +380,9 @@ int Parse_statement(){
 int Parse_condition_statement(){
 
     int TYPE = ERROR;
+    char *label_if, *label_else;
+
+    if(create_label(&label_if) == ERROR) return ERROR;
 
     if(token != TIF) return error("'if' is not found");
     token = scan();
@@ -386,16 +390,29 @@ int Parse_condition_statement(){
     if((TYPE = Parse_expression()) == ERROR) return ERROR;
     if(TYPE != TPBOOL) return error("type of expression is expected boolean in condition statement");
 
+    /* print if command in output */
+    fprintf(output, "\tCPA\tgr1,gr0\n");
+    fprintf(output, "\tJZE\t%s\n", label_if);
+
     if(token != TTHEN) return error("'then' is not found");
     token = scan();
 
     if(Parse_statement() == ERROR) return ERROR;
     
     if(token == TELSE){
+        
+        if(create_label(&label_else) == ERROR) return ERROR;
+        fprintf(output, "\tJUMP\t%s\n", label_else);
+        fprintf(output, "%s\n", label_if);
+
         token = scan();
 
         if(Parse_statement() == ERROR) return ERROR;
-    }    
+
+        fprintf(output, "%s\n", label_else);
+    }else{
+        fprintf(output, "%s\n", label_if);
+    }
     return NORMAL;
 }
 
@@ -422,7 +439,8 @@ int Parse_exit_statement(){
     if(token != TBREAK) return error("'break' is not found");
     if(is_iterate > 0){
         token = scan();
-    }else return error("'break' is not exist in iteration statement");        
+    }else return error("'break' is not exist in iteration statement"); 
+    //fprintf(output, "\tJUMP\t%s\n",label_exit);
     return NORMAL;
 }
 

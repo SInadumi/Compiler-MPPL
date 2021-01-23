@@ -70,7 +70,7 @@ int register_strlabel(char *label, char *str){
     if((p = (struct SLABEL *)malloc(sizeof(struct SLABEL))) == NULL){
         return error("cannot malloc in register strlabel");
     }
-    snprintf(p->str, MAXSTRSIZE, "%s\t%s\n", label, str);
+    snprintf(p->str, MAXSTRSIZE, "%s\tDC\t%s\n", label, str);
     p->nextp = NULL;
     if(strlabelroot == NULL){
         strlabelroot = p;

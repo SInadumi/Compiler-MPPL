@@ -252,6 +252,7 @@ extern char *get_prev_procname(void);
 extern int get_prev_procline(void);
 
 /* mppl_compiler.c */
+extern int labelnum;
 extern int init_outfile(char *filename, FILE **out);
 extern void end_outfile(FILE *out);
 extern int create_label(char **label);
