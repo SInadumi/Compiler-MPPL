@@ -745,7 +745,9 @@ int Parse_relational_operator(){
 int Parse_input_statement(){
 
     int TYPE = ERROR;
+    int is_readln = 0;
 
+    if(token == TREADLN) is_readln = 1;
     if(token == TREAD || token == TREADLN){
         token = scan(); 
     }
@@ -758,6 +760,8 @@ int Parse_input_statement(){
         if(TYPE != TPINT && TYPE != TPCHAR){ 
             return error("valiable statement is expected type of char or integer in input statement");
         }
+        /* print inst read */
+        inst_read(TYPE);
 
         while(token == TCOMMA){
             token = scan(); 
@@ -770,11 +774,13 @@ int Parse_input_statement(){
         if(token != TRPAREN) return error("expect parentheses in input statement");
         token = scan();    
     }
+    if(is_readln) fprintf(output, "\tCALL\tREADLINE\n");
     return NORMAL;
 }
 
 int Parse_output_statement(){
-
+    int is_writeln = 0;
+    if(token == TWRITELN) is_writeln = 1;
     if(token == TWRITE || token == TWRITELN){
         token = scan(); 
     }
@@ -794,6 +800,7 @@ int Parse_output_statement(){
         if(token != TRPAREN) return error("expect parentheses in output statement");
         token = scan();    
     }
+    if(is_writeln) fprintf(output, "\tCALL\tWRITELINE\n");
     return NORMAL;
 }
 

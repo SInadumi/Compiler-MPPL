@@ -154,10 +154,18 @@ int inst_write_value(int type, int nums){
     }
     return NORMAL;
 }   
-// int inst_write_line(){
-//     return NORMAL;
-// }
-
+void inst_read(int type){
+    switch(type){
+        case TPINT:
+            fprintf(output, "\tCALL\tREADINT\n");
+            break;
+        case TPCHAR:
+            fprintf(output, "\tCALL\tREADCHAR\n");
+            break;
+        default :
+            break;
+    }
+}
 // /* Program 'read' */
 // void inst_read(){
 
