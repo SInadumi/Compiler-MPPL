@@ -15,7 +15,7 @@ static int is_empty = 0;    // Does Exist empty statement
 static int is_iterate = 0;  // Judge whether this is scanning of iteration statement or not
 static int token = 0;       // Token code Buffer
 static int is_global = GLOBAL_PARAM;
-static char label_exit[MAXSTRSIZE];
+static char *label_exit;
 
 static int Check_Standard_Type(int TYPE);
 
@@ -419,9 +419,15 @@ int Parse_condition_statement(){
 int Parse_iteration_statement(){
 
     int TYPE = ERROR;
+    char *label = NULL, *holder_label = NULL, *t_label_exit = NULL;
 
     if(token != TWHILE) return error("'while' is not found");
     token = scan();
+
+    if(create_label(&label) == ERROR) return ERROR;
+    if(create_label(&t_label_exit) == ERROR) return ERROR;
+    holder_label = label_exit;
+    fprintf(output, "%s\n", label);
 
     if((TYPE = Parse_expression()) == ERROR) return ERROR;
     if(TYPE != TPBOOL) return error("type of expression is expected boolean in iteration statement");
@@ -429,9 +435,18 @@ int Parse_iteration_statement(){
     if(token != TDO) return error("'do' is not found");
     token = scan();
 
+    fprintf(output, "\tCPA\tgr1,gr0\n");
+    fprintf(output, "\tJZE\t%s\n", t_label_exit);
+    label_exit = t_label_exit;
+
     is_iterate++;
     if(Parse_statement() == ERROR) return ERROR;
     is_iterate--;
+    
+    label_exit = holder_label;
+    fprintf(output, "\tJUMP\t%s\n", label);
+    fprintf(output, "%s\n", t_label_exit);
+
     return NORMAL;
 }
 
@@ -440,7 +455,7 @@ int Parse_exit_statement(){
     if(is_iterate > 0){
         token = scan();
     }else return error("'break' is not exist in iteration statement"); 
-    //fprintf(output, "\tJUMP\t%s\n",label_exit);
+    fprintf(output, "\tJUMP\t%s\n", label_exit);
     return NORMAL;
 }
 
