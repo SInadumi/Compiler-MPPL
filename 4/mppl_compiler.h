@@ -173,9 +173,8 @@ struct ID{
 };
 
 struct PARAM{
-    struct ID *prev;
     struct ID *now;
-    struct ID *next;
+    struct PARAM *next;
 };
 
 /* main.c */
@@ -231,13 +230,14 @@ extern int Parse_empty_statement();
 /* cxref.c */
 extern struct ID *globalidroot;
 extern struct ID *localidroot;
+extern struct PARAM *param;
 extern char *type_str[NUMOFTYPE + 1];
 extern void init_global_idtab(void);
 extern void init_local_idtab(void);
 extern struct ID *search_global_idtab(char *name);
 extern struct ID *search_local_idtab(char *name, char *pname);
 extern int memorize_name(char *name);
-extern int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct TYPE *tparatp);
+extern int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct PARAM *tparatp);
 extern int memorize_linenum(int line);
 extern int memorize_proc(char *name, int line);
 extern int define_identifer(int is_formal, int is_global);
@@ -247,12 +247,11 @@ extern int print_cxref_table(void);
 extern void release_global_idtab(void);
 extern void relocate_local_idtab(void);
 extern struct TYPE *get_etp_type_structure(void);
-extern struct TYPE *get_paratp(char *pname);
+extern struct PARAM *get_paratp(char *pname);
 extern char *get_prev_procname(void);
 extern int get_prev_procline(void);
 
 /* mppl_compiler.c */
-extern struct PARAM *params;
 extern int init_outfile(char *filename, FILE **out);
 extern void end_outfile(FILE *out);
 extern int create_label(char **label);
@@ -261,11 +260,13 @@ extern int print_id_label(struct ID *p);
 extern int inst_start(char *program_name, char **st_label);
 extern void inst_close_program();
 extern void inst_return();
+extern void inst_procedule_params(struct PARAM *params);
+extern void INSTRUCTIONS();
+
 extern int inst_write();
 extern int inst_write_string();
 extern int inst_write_line();
 extern void inst_read_integer();
 extern void inst_read_char();
 extern void inst_read_line();
-extern void INSTRUCTIONS();
 #endif

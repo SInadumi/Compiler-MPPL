@@ -1,7 +1,7 @@
 #include "mppl_compiler.h"
 
 /* public */
-struct PARAM *params = NULL;
+
 /* private */
 int labelnum = 0;
 
@@ -74,11 +74,20 @@ void inst_close_program(){
     fprintf(output, "\tEND\n");
 }
 
-
-
-// /* Statement 'return' and end of program */
+/* Statement 'return' and end of program */
 void inst_return(){
     fprintf(output, "\tRET\n");
+}
+
+/* Statement 'procedule' */
+void inst_procedule_params(struct PARAM *para){
+    struct PARAM *p;
+    if(para == NULL) return ;
+    fprintf(output, "\tPOP\tgr2\n");
+    for(p = para; p != NULL; p = p->next){
+        fprintf(output, "\tPOP\tgr1\n");
+        fprintf(output, "\tST\tgr1,$%s%%%s\n", p->now->name, p->now->procname);
+    }
 }
 
 // /* Program 'write' */

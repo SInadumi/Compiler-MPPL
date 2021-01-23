@@ -209,7 +209,7 @@ int Parse_array_type(){
 
 int Parse_subprogram_declaration(){
 
-    struct TYPE *param_types = NULL;
+    struct PARAM *param = NULL;
 
     /* initialize localidtab */
     init_local_idtab();
@@ -226,15 +226,18 @@ int Parse_subprogram_declaration(){
 
     if (token != TSEMI) return error("Semicolon is not found in procedule statement");
     token = scan();
-    param_types = get_paratp(get_prev_procname());
+    param = get_paratp(get_prev_procname());
     if(token == TVAR){
         if(Parse_variable_declaration()) return ERROR;
     }
 
     memorize_name(get_prev_procname());
     memorize_linenum(get_prev_procline());
-    memorize_type(TPPROC, 0, NULL, param_types);
+    memorize_type(TPPROC, 0, NULL, param);
     define_identifer(NOT_FORMAL_PARAM, GLOBAL_PARAM);
+
+    /* print process arguments in output */
+    inst_procedule_params(param);
 
     /* Parse(compound statement) */
     if(Parse_compound_statement() == ERROR) return ERROR;    

@@ -4,6 +4,7 @@
 /* public */
 struct ID *globalidroot = NULL;
 struct ID *localidroot = NULL;
+struct PARAM *param = NULL;
 char *type_str[NUMOFTYPE + 1] = {
     "", "integer", "char", "boolean", "array", "integer", "char", "boolean", "procedule"
 };
@@ -84,9 +85,10 @@ int memorize_name(char *name){
     return NORMAL;
 }
 
-int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct TYPE *tparatp){
+int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct PARAM *tparatp){
     struct TYPE *temp_etp;
-    struct TYPE *temp_paratp;
+    struct TYPE *temp_paratp, *proot = NULL;
+    struct PARAM *p;
     
     if((t_type = (struct TYPE *)malloc(sizeof(struct TYPE))) == NULL){
         return error("cannot malloc-1 in memorize type");
@@ -102,15 +104,17 @@ int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct TYPE *tparatp)
     }
 
     if(tparatp != NULL){
-        temp_paratp = tparatp;
-    }else{
-        temp_paratp = NULL;
+        for(p = tparatp; p != NULL; p = p->next){
+            temp_paratp = p->now->itp;
+            temp_paratp->paratp = proot;
+            proot = temp_paratp;
+        }
     }
 
     t_type->ttype = ttype;
     t_type->arraysize = tsize;
     t_type->etp = temp_etp;
-    t_type->paratp = temp_paratp;
+    t_type->paratp = proot;
 
     return NORMAL;
 
@@ -396,6 +400,8 @@ void release_global_idtab(){
     struct ID *p, *q;
     struct TYPE *i, *j;
     struct LINE *a, *b;
+    struct PARAM *c, *d;
+
     for(p = globalidroot; p != NULL; p = q){
         free(p->name);
         free(p->procname);
@@ -411,6 +417,11 @@ void release_global_idtab(){
         }
         q = p->nextp;
         free(p);
+    }
+    
+    for(c = param; c != NULL; c = d){
+        d = c->next;
+        free(c);
     }
     
     free(t_proc->prev_procname);
@@ -444,8 +455,6 @@ static void release_formaltab(){
         free(i);
     }
 
-    //if(t_type->etp != NULL) free(t_type->etp);
-    //if(paratp_root == NULL && t_type->paratp != NULL) free(t_type->paratp);
     free(t_type);
 
     for(p = t_namesroot; p != NULL; p = q){
@@ -462,25 +471,23 @@ struct TYPE *get_etp_type_structure(){
     if(t_type != NULL) return t_type;
     else return NULL;
 }
-struct TYPE *get_paratp(char *pname){
-    struct TYPE *tparatp;
+struct PARAM *get_paratp(char *pname){
+    struct PARAM *tp, *param = NULL;
     struct ID *p,*q;
     for(p = localidroot; p != NULL; p = q){
         if(p->procname == NULL) continue; 
         if(strcmp(p->procname, pname) == 0 && p->ispara == FORMAL_PARAM){
-            if((tparatp = (struct TYPE *)malloc(sizeof(struct TYPE))) == NULL){
+            if((tp = (struct PARAM *)malloc(sizeof(struct PARAM))) == NULL){
                 fprintf(stdout, "cannot malloc in get paratp");
                 return NULL;
             }
-            tparatp->ttype = p->itp->ttype;
-            tparatp->arraysize = 0;
-            tparatp->etp = NULL;
-            tparatp->paratp = paratp_root;
-            paratp_root = tparatp;
+            tp->now = p;
+            tp->next = param;
+            param = tp;
         }
         q = p->nextp;
     }
-    return paratp_root;
+    return param;
 }
 char *get_prev_procname(){
     return t_proc->prev_procname;
