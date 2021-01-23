@@ -3,6 +3,10 @@
 /* public */
 
 /* private */
+static struct SLABEL{
+    char str[MAXSTRSIZE];
+    struct SLABEL *nextp;
+}*strlabelroot = NULL;
 int labelnum = 0;
 
 int init_outfile(char *filename, FILE **out){
@@ -37,10 +41,6 @@ int create_label(char **label){
     return NORMAL;
 }
 
-void print_labelname(char *label){
-    fprintf(output, "%s\n", label);
-}
-
 int print_id_label(struct ID *p){
 
     if(p == NULL){
@@ -57,6 +57,29 @@ int print_id_label(struct ID *p){
     if(p->itp->ttype == TPARRAY) fprintf(output, "\tDS\t%d\n", p->itp->arraysize);
     else if(p->itp->ttype == TPPROC) fprintf(output, "\n");
     else fprintf(output, "\tDC\t0\n");
+    return NORMAL;
+}
+void print_strlabel(){
+    struct SLABEL *p;
+    for(p = strlabelroot; p != NULL; p = p->nextp){
+        fprintf(output, "%s", p->str);
+    }
+}
+int register_strlabel(char *label, char *str){
+    struct SLABEL *p, *q;
+    if((p = (struct SLABEL *)malloc(sizeof(struct SLABEL))) == NULL){
+        return error("cannot malloc in register strlabel");
+    }
+    snprintf(p->str, MAXSTRSIZE, "%s\t%s\n", label, str);
+    p->nextp = NULL;
+    if(strlabelroot == NULL){
+        strlabelroot = p;
+        return NORMAL;
+    }
+
+    for(q = strlabelroot; q->nextp != NULL; q = q->nextp){}
+    
+    q->nextp = p;
     return NORMAL;
 }
 
@@ -84,7 +107,7 @@ void inst_procedule_params(struct PARAM *para){
     struct PARAM *p;
     if(para == NULL) return ;
     fprintf(output, "\tPOP\tgr2\n");
-    for(p = para; p != NULL; p = p->next){
+    for(p = para; p != NULL; p = p->nextp){
         fprintf(output, "\tPOP\tgr1\n");
         fprintf(output, "\tST\tgr1,$%s%%%s\n", p->now->name, p->now->procname);
     }
@@ -100,9 +123,37 @@ void inst_procedule_params(struct PARAM *para){
 //     return NORMAL;
 // }
 
-// int inst_write_string(){
-//     return NORMAL;
-// }
+int inst_write_string(char *str){
+    char *label;
+    if(create_label(&label) == ERROR) return ERROR;
+    fprintf(output, "\tLAD\tgr1,%s\n",label);
+    fprintf(output, "\tLD\tgr2,gr0\n");
+    fprintf(output, "\tCALL\tWRITESTR\n");
+    if(register_strlabel(label, str) == ERROR) return ERROR;
+    return NORMAL;
+}
+
+int inst_write_value(int type, int nums){
+    if(nums > 0){
+        fprintf(output, "\tLAD\tgr2,%d\n", num_attr);
+    }else{
+        fprintf(output, "\tLD\tgr2,gr0\n");
+    }
+    switch(type){
+        case TPINT:
+            fprintf(output, "\tCALL\tWRITEINT\n");
+            break;
+        case TPCHAR:
+            fprintf(output, "\tCALL\tWRITECHAR\n");
+            break;
+        case TPBOOL:
+            fprintf(output, "\tCALL\tWRITEBOOL\n");
+            break;
+        default : 
+            break;
+    }
+    return NORMAL;
+}   
 // int inst_write_line(){
 //     return NORMAL;
 // }

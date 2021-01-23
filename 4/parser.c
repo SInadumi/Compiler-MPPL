@@ -45,6 +45,10 @@ int Parse_program(){
     /* print cxref table */
     if(print_cxref_table() == ERROR) return ERROR;
 
+    /* print str Label and inst */
+    print_strlabel();
+    INSTRUCTIONS();
+
     /* release global id table */
     release_global_idtab();
 
@@ -67,8 +71,7 @@ int Parse_block(char *st_label){
         }else return error("'var' or 'procedure' is not found");
         
     }
-
-    print_labelname(st_label);
+    fprintf(output, "%s\n", st_label);
 
     /* check compound statement */
     is_global = GLOBAL_PARAM;
@@ -215,7 +218,6 @@ int Parse_subprogram_declaration(){
     init_local_idtab();
     
     if(token != TPROCEDURE) return error("'procedule' is not found");
-
     token = scan();
 
     /* Parse(procedule name) */
@@ -805,6 +807,7 @@ int Parse_output_format(){
                 return error("length of STRING should be more two or zero");
             }
             else{
+                inst_write_string();
                 token = scan();
                 break;
             }
@@ -826,7 +829,10 @@ int Parse_output_format(){
                 token = scan();
         
                 if(token != TNUMBER) return error("expect [NUMBER] in output statement");
+                inst_write_value(TYPE, num_attr);
                 token = scan();
+            }else{
+                inst_write_value(TYPE, 0);
             }
             break;
         default:

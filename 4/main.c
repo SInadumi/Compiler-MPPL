@@ -21,7 +21,6 @@ int main(int nc, char *np[]) {
 
 	/* Parse(program) */
 	is_success = Parse_program();
-	INSTRUCTIONS();
 
 	end_scan(input);
 	end_outfile(output);

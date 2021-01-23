@@ -104,7 +104,7 @@ int memorize_type(int ttype, int tsize, struct TYPE *tetp, struct PARAM *tparatp
     }
 
     if(tparatp != NULL){
-        for(p = tparatp; p != NULL; p = p->next){
+        for(p = tparatp; p != NULL; p = p->nextp){
             temp_paratp = p->now->itp;
             temp_paratp->paratp = proot;
             proot = temp_paratp;
@@ -420,7 +420,7 @@ void release_global_idtab(){
     }
     
     for(c = param; c != NULL; c = d){
-        d = c->next;
+        d = c->nextp;
         free(c);
     }
     
@@ -482,7 +482,7 @@ struct PARAM *get_paratp(char *pname){
                 return NULL;
             }
             tp->now = p;
-            tp->next = param;
+            tp->nextp = param;
             param = tp;
         }
         q = p->nextp;

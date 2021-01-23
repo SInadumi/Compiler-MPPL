@@ -174,7 +174,7 @@ struct ID{
 
 struct PARAM{
     struct ID *now;
-    struct PARAM *next;
+    struct PARAM *nextp;
 };
 
 /* main.c */
@@ -255,12 +255,15 @@ extern int get_prev_procline(void);
 extern int init_outfile(char *filename, FILE **out);
 extern void end_outfile(FILE *out);
 extern int create_label(char **label);
-extern void print_labelname(char *label);
 extern int print_id_label(struct ID *p);
+extern void print_strlabel();
+extern int register_strlabel(char *label, char *str);
 extern int inst_start(char *program_name, char **st_label);
 extern void inst_close_program();
 extern void inst_return();
 extern void inst_procedule_params(struct PARAM *params);
+extern int inst_write_string();
+extern int inst_write_value(int type, int nums);
 extern void INSTRUCTIONS();
 
 extern int inst_write();
