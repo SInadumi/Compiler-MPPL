@@ -49,12 +49,11 @@ int Parse_program(){
     /* print str Label and inst */
     print_strlabel();
     INSTRUCTIONS();
+    /* write 'END' in output */
+    fprintf(output, "\tEND\n");
 
     /* release global id table */
     release_global_idtab();
-
-    /* write 'END' in output */
-    inst_close_program();
 
     return NORMAL; 
 }
@@ -79,7 +78,7 @@ int Parse_block(char *st_label){
     if(Parse_compound_statement() == ERROR) return ERROR;
 
     /* write 'RET' in output */
-    inst_return();
+    fprintf(output, "\tRET\n");
 
     return NORMAL; 
 }
@@ -252,7 +251,7 @@ int Parse_subprogram_declaration(){
     relocate_local_idtab();
 
     /* write 'RET' in output */
-    inst_return();
+    fprintf(output, "\tRET\n");
 
     return NORMAL;
 }
@@ -316,19 +315,16 @@ int Parse_compound_statement(){
     
     while(token == TSEMI){
         token = scan();
-
         if(Parse_statement() == ERROR) return ERROR;
     }
 
     if(token != TEND) return error("'end' is not found.");
-    if(is_empty == 1){
-        is_empty = 0;
-    }
-
+    if(is_empty == 1) is_empty = 0;
     token = scan();
 
     return NORMAL;
 }
+
 int Parse_statement(){
 
     switch(token){
@@ -454,7 +450,9 @@ int Parse_exit_statement(){
     if(token != TBREAK) return error("'break' is not found");
     if(is_iterate > 0){
         token = scan();
-    }else return error("'break' is not exist in iteration statement"); 
+    }else{
+        return error("'break' is not exist in iteration statement"); 
+    }
     fprintf(output, "\tJUMP\t%s\n", label_exit);
     return NORMAL;
 }
@@ -485,6 +483,7 @@ int Parse_call_statement(){
         if(token != TRPAREN) return error("parentheses is not found in call statement");
         token = scan();
     }
+    fprintf(output, "\tCALL\t$%s\n", get_prev_procname());
     return NORMAL;
 }
 
@@ -516,7 +515,7 @@ int Parse_return_statement(){
     token = scan();
     
     /* write 'RET' in output */
-    inst_return();
+    fprintf(output, "\tRET\n");
 
     return NORMAL;
 }
@@ -841,16 +840,14 @@ int Parse_output_format(){
 
     int TYPE = ERROR;
 
+    if(token == TSTRING && strlen(string_attr) > 1){
+        inst_write_string();
+        token = scan();
+        return NORMAL;
+    }
+
     switch(token){
         case TSTRING:
-            if(strlen(string_attr) == 1){
-                return error("length of STRING should be more two or zero");
-            }
-            else{
-                inst_write_string();
-                token = scan();
-                break;
-            }
         case TPLUS:
         case TMINUS:
         case TNAME:

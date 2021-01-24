@@ -260,18 +260,9 @@ extern int print_id_label(struct ID *p);
 extern void print_strlabel();
 extern int register_strlabel(char *label, char *str);
 extern int inst_start(char *program_name, char **st_label);
-extern void inst_close_program();
-extern void inst_return();
 extern void inst_procedule_params(struct PARAM *params);
 extern int inst_write_string();
 extern int inst_write_value(int type, int nums);
 extern void inst_read(int type);
 extern void INSTRUCTIONS();
-
-extern int inst_write();
-extern int inst_write_string();
-extern int inst_write_line();
-extern void inst_read_integer();
-extern void inst_read_char();
-extern void inst_read_line();
 #endif

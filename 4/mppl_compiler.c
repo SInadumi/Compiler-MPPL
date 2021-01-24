@@ -93,14 +93,6 @@ int inst_start(char *program_name, char **st_label){
     fprintf(output, "\tSVC\t0\n");
     return NORMAL;
 }
-void inst_close_program(){
-    fprintf(output, "\tEND\n");
-}
-
-/* Statement 'return' and end of program */
-void inst_return(){
-    fprintf(output, "\tRET\n");
-}
 
 /* Statement 'procedule' */
 void inst_procedule_params(struct PARAM *para){
@@ -111,17 +103,8 @@ void inst_procedule_params(struct PARAM *para){
         fprintf(output, "\tPOP\tgr1\n");
         fprintf(output, "\tST\tgr1,$%s%%%s\n", p->now->name, p->now->procname);
     }
+    fprintf(output, "\tPUSH\t0,gr2\n");
 }
-
-// /* Program 'write' */
-// int inst_write_integer(){
-
-//     return NORMAL;
-// }
-
-// int inst_write_boolean(){
-//     return NORMAL;
-// }
 
 int inst_write_string(char *str){
     char *label;
@@ -166,20 +149,6 @@ void inst_read(int type){
             break;
     }
 }
-// /* Program 'read' */
-// void inst_read(){
-
-// }
-
-// void inst_read_line(){
-//     fprintf(output, " ");
-// }
-
-// /* 部分式・引数の取り出しコードの生成 */
-// int inst_params(){
-//     if(params == NULL) return NORMAL;
-
-// }
 
 /* Instruction CASL2 */
 void INSTRUCTIONS(){
