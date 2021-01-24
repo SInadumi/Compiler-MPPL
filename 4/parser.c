@@ -722,11 +722,17 @@ int Parse_constant(){
     int TYPE = ERROR;
 
     if(token == TNUMBER){
+        fprintf(output, "\tLAD\tgr1,%d\n", num_attr);
         TYPE = TPINT;
-    }else if(token == TFALSE || token == TTRUE){
+    }else if(token == TFALSE){
+        fprintf(output, "\tLAD\tgr1,0\n");
+        TYPE = TPBOOL;
+    }else if(token == TTRUE){
+        fprintf(output, "\tLAD\tgr1,1\n");
         TYPE = TPBOOL;
     }else if(token == TSTRING){
         if(strlen(string_attr) == 1){
+            fprintf(output, "\tLAD\tgr1,%d\n", string_attr[0]);
             TYPE = TPCHAR;
         }else{
             return error("expect only one length in STRING element in constant variable");
