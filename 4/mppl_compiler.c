@@ -246,6 +246,26 @@ void inst_simple_expression(int opr){
     }
 }
 
+void inst_term(int opr){
+    fprintf(output, "\tPOP\tgr2\n");
+    switch(opr){
+        case TSTAR:
+            fprintf(output, "\tMULA\tgr1,gr2\n");
+            fprintf(output, "\tJOV\tEOVF\n");
+            break;
+        case TAND:
+            fprintf(output, "\tAND\tgr1,gr2\n");
+            break;
+        case TDIV:
+            fprintf(output, "\tDIVA\tgr2,gr1\n");
+            fprintf(output, "\tJOV\tE0DIV\n");
+            fprintf(output, "\tLD\tgr1,gr2\n");
+            break;
+        default:
+            break;
+    }
+}
+
 /* Instruction CASL2 */
 void INSTRUCTIONS(){
     // EOVF 201

@@ -669,14 +669,22 @@ int Parse_term(){
     int TYPE_operator = ERROR;
     int TYPE_operand = ERROR;
 
+    int opr = ERROR;
+
     if((TYPE = Parse_factor()) == ERROR) return ERROR;
 
     TYPE_operator = TYPE;
 
     while(token == TSTAR || token == TDIV || token == TAND){
 
+        opr = token;
+        fprintf(output, "\tPUSH\t0,gr1\n");
+
         if((TYPE = Parse_multiplicative_operator()) == ERROR) return ERROR;
         if((TYPE_operand = Parse_factor()) == ERROR) return ERROR;
+
+        inst_term(opr);
+
         //if(TYPE != TYPE_operand) return error("type of operator and multiplicative operator should be equal");
         if(TYPE_operator != TYPE_operand) return error("type of operator and operand should be equal");
         TYPE_operator = TYPE_operand;
