@@ -536,7 +536,7 @@ int Parse_assignment_statement(){
     
     if(TYPE_left_part != TYPE_expression) return error("Type of LEFT_PART and EXPRESSION should be equal");
 
-    // gr2->式の値，gr1に左辺値
+    // スタックトップ->式の値，一段下に左辺値
     fprintf(output, "\tPOP\tgr2\n");
     fprintf(output, "ST\tgr1,0,gr2\n");
 
@@ -591,12 +591,12 @@ int Parse_variable(){
     return TYPE;
 }
 
-// gr2に式の値を常に格納
 int Parse_expression(){
 
     int TYPE = ERROR;
     int TYPE_operator = ERROR;
     int TYPE_operand = ERROR;
+    int opr = ERROR;
 
     if((TYPE = Parse_simple_expression()) == ERROR) return ERROR;
 
@@ -605,11 +605,15 @@ int Parse_expression(){
     while(token == TEQUAL || token == TNOTEQ || token == TLE ||
         token == TLEEQ || token == TGR || token == TGREQ ){
             
+            opr = token;
+            fprintf(output, "\tPUSH\t0,gr1\n");
+
             if((TYPE = Parse_relational_operator()) == ERROR) return ERROR;
             if((TYPE_operand = Parse_simple_expression()) == ERROR) return ERROR;
             //if(TYPE != TYPE_operand) return error("type of operator and relational operator should be equal");
             if(TYPE_operator != TYPE_operand) return error("type of operator and operand should be equal");
             TYPE_operator = TYPE_operand;
+            inst_expression(opr);
     }
 
     return TYPE;

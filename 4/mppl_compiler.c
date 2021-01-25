@@ -172,6 +172,54 @@ int inst_variable(struct ID *p, int point_to_array){
     }
     return NORMAL;
 }
+int inst_expression(int opr){
+    char *label_t = NULL, *label_f = NULL;
+
+    if(create_label(&label_t) == ERROR) return ERROR;
+    if(create_label(&label_f) == ERROR) return ERROR;
+
+    fprintf(output, "\tPOP\tgr2\n");
+    fprintf(output, "\tCPA\tgr2,gr1\n");
+    switch(opr){
+        case TEQUAL:
+            fprintf(output, "\tJZE\t%s\n", label_t);
+            fprintf(output, "\tLD\tgr1,gr0\n");
+            break;
+        case TNOTEQ:
+            fprintf(output, "\tJNZ\t%s\n", label_t);
+            fprintf(output, "\tLD\tgr1,gr0\n");
+            break;
+        case TLE:
+            fprintf(output, "\tJMI\t%s\n", label_t);
+            fprintf(output, "\tLD\tgr1,gr0\n");
+            break;
+        case TLEEQ:
+            fprintf(output, "\tJPL\t%s\n", label_t);
+            fprintf(output, "\tLAD\tgr1,1\n");
+            break;
+        case TGR:
+            fprintf(output, "\tJPL\t%s\n", label_t);
+            fprintf(output, "\tLD\tgr1,gr0\n");
+            break;
+        case TGREQ:
+            fprintf(output, "\tJMI\t%s\n", label_t);
+            fprintf(output, "\tLAD\tgr1,1\n");
+            break;
+        default:
+            break;
+    }
+
+    fprintf(output, "\tJUMP\t%s\n", label_f);
+    fprintf(output, "%s\n", label_t);
+    if(opr == TLEEQ || opr == TGREQ){
+        fprintf(output, "\tLD\tgr1,gr0\n");
+    }else
+    {
+        fprintf(output, "\tLAD\tgr1,1\n");
+    }
+    fprintf(output, "%s\n", label_f);
+    return NORMAL;
+}
 
 /* Instruction CASL2 */
 void INSTRUCTIONS(){

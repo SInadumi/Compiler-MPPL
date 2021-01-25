@@ -265,5 +265,6 @@ extern int inst_write_string();
 extern int inst_write_value(int type, int nums);
 extern void inst_read(int type);
 extern int inst_variable(struct ID *p, int point_to_array);
+extern int inst_expression(int opr);
 extern void INSTRUCTIONS();
 #endif
