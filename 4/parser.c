@@ -536,6 +536,10 @@ int Parse_assignment_statement(){
     
     if(TYPE_left_part != TYPE_expression) return error("Type of LEFT_PART and EXPRESSION should be equal");
 
+    // gr2->式の値，gr1に左辺値
+    fprintf(output, "\tPOP\tgr2\n");
+    fprintf(output, "ST\tgr1,0,gr2\n");
+
     return NORMAL;
 }
 
@@ -550,7 +554,7 @@ int Parse_variable(){
 
     int TYPE = ERROR;
     int TYPE_statement = ERROR;
-    int point_to_array = 0;
+    int point_to_array = -1;
     struct ID *p;
     if(is_global == LOCAL_PARAM){
         if((p = search_local_idtab((char *)string_attr, get_prev_procname())) == NULL){
@@ -582,9 +586,12 @@ int Parse_variable(){
     }
 
     if(reference_identifer(p->name, get_prev_procname(), get_linenum(), point_to_array, is_global) == ERROR) return ERROR;
-    
+    /* print load or load adress in variable */
+    if(inst_variable(p, point_to_array) == ERROR) return ERROR;
     return TYPE;
 }
+
+// gr2に式の値を常に格納
 int Parse_expression(){
 
     int TYPE = ERROR;

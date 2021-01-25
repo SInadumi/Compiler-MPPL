@@ -264,5 +264,6 @@ extern void inst_procedule_params(struct PARAM *params);
 extern int inst_write_string();
 extern int inst_write_value(int type, int nums);
 extern void inst_read(int type);
+extern int inst_variable(struct ID *p, int point_to_array);
 extern void INSTRUCTIONS();
 #endif
