@@ -625,22 +625,35 @@ int Parse_simple_expression(){
     int TYPE_operator = ERROR;
     int TYPE_operand = ERROR;
     
-    int check_plus = 0;
+    int is_plus_or_minus = 0;
+    int is_minus = 0;
+    int opr = ERROR;
 
-    if(token == TPLUS || token == TMINUS){
+    if(token == TPLUS){
+        is_plus_or_minus = 1;
         token = scan();
-        check_plus = 1;
+    }else if(token == TMINUS){
+        is_plus_or_minus = 1;
+        is_minus = 1;
+        token = scan();
     }
     
     if((TYPE = Parse_term()) == ERROR) return ERROR;
-    if(check_plus == 1 && TYPE != TINTEGER) return error("type of term should be TINTEGER in simple expression");
-
+    if(is_plus_or_minus == 1 && TYPE != TINTEGER) return error("type of term should be TINTEGER in simple expression");
     TYPE_operator = TYPE;
 
+    if(is_minus == 1) inst_minus();
+
     while(token == TPLUS || token == TMINUS || token == TOR){
+        
+        opr = token;
+        fprintf(output, "\tPUSH\t0,gr1\n");
 
         if((TYPE = Parse_additive_operator()) == ERROR) return ERROR;
         if((TYPE_operand = Parse_term()) == ERROR) return ERROR;
+
+        inst_simple_expression(opr);
+
         //if(TYPE != TYPE_operand) return error("type of operator and additive operator should be equal");
         if(TYPE_operator != TYPE_operand) return error("type of operator and operand should be equal");
         TYPE_operator = TYPE_operand;

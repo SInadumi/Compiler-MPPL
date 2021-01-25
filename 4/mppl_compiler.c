@@ -220,6 +220,31 @@ int inst_expression(int opr){
     fprintf(output, "%s\n", label_f);
     return NORMAL;
 }
+void inst_minus(){
+    fprintf(output, "\tLAD\tgr2,-1\n");
+    fprintf(output, "\tMULA\tgr1,gr2\n");
+    fprintf(output, "\tJOV\tEOVF\n");
+}
+
+void inst_simple_expression(int opr){
+    fprintf(output, "\tPOP\tgr2\n");
+    switch(opr){
+        case TPLUS:
+            fprintf(output, "\tADDA\tgr1,gr2\n");
+            fprintf(output, "\tJOV\tEOVF");
+            break;
+        case TMINUS:
+            fprintf(output, "\tSUBA\tgr2,gr1\n");
+            fprintf(output, "\tJOV\tEOVF\n");
+            fprintf(output, "\tLD\tgr1,gr2\n");
+            break;
+        case TOR:
+            fprintf(output, "\tOR\tgr1,gr2\n");
+            break;
+        default:
+            break;
+    }
+}
 
 /* Instruction CASL2 */
 void INSTRUCTIONS(){
