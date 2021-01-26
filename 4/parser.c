@@ -16,6 +16,9 @@ static int is_iterate = 0;  // Judge whether this is scanning of iteration state
 static int token = 0;       // Token code Buffer
 static int is_global = GLOBAL_PARAM;
 static char *label_exit;
+static int is_opr = 0;
+static int is_formal = 0;
+static int is_callp = 0;
 
 static int Check_Standard_Type(int TYPE);
 
@@ -267,6 +270,7 @@ int Parse_procedule_name(){
 int Parse_formal_parameters(){
 
     int TYPE = ERROR;
+    is_formal = 1;
 
     if(token != TLPAREN) return error("Parentheses is not found in procedule statement");
     token = scan();
@@ -300,6 +304,8 @@ int Parse_formal_parameters(){
 
     if(token != TRPAREN) return error("parentheses is not found in procedule statement");
     token = scan();
+
+    is_formal = 0;
 
     return NORMAL;
 
@@ -478,8 +484,9 @@ int Parse_call_statement(){
 
     if(token == TLPAREN){
         token = scan();
-
+        is_callp = 1;
         if(Parse_expressions(fparams->itp->paratp) == ERROR) return ERROR;
+        is_callp = 0;
         if(token != TRPAREN) return error("parentheses is not found in call statement");
         token = scan();
     }
@@ -491,6 +498,7 @@ int Parse_expressions(struct TYPE *fparams){
 
     int TYPE = ERROR;
     struct TYPE *tfparams = fparams;
+    is_opr = 0;
 
     if((TYPE = Parse_expression()) == ERROR) return ERROR;
     if(tfparams == NULL) return error("number of formal and expression is not matched");
@@ -501,6 +509,7 @@ int Parse_expressions(struct TYPE *fparams){
         token = scan();
         
         tfparams = tfparams->paratp;
+        is_opr = 0;
 
         if((TYPE = Parse_expression()) == ERROR) return ERROR;
         if(tfparams == NULL) return error("number of formal and expression is not matched");
@@ -606,6 +615,7 @@ int Parse_expression(){
         token == TLEEQ || token == TGR || token == TGREQ ){
             
             opr = token;
+            is_opr = 1;
             fprintf(output, "\tPUSH\t0,gr1\n");
 
             if((TYPE = Parse_relational_operator()) == ERROR) return ERROR;
@@ -631,10 +641,12 @@ int Parse_simple_expression(){
 
     if(token == TPLUS){
         is_plus_or_minus = 1;
+        is_opr = 1;
         token = scan();
     }else if(token == TMINUS){
         is_plus_or_minus = 1;
         is_minus = 1;
+        is_opr = 1;
         token = scan();
     }
     
@@ -647,6 +659,7 @@ int Parse_simple_expression(){
     while(token == TPLUS || token == TMINUS || token == TOR){
         
         opr = token;
+        is_opr = 1;
         fprintf(output, "\tPUSH\t0,gr1\n");
 
         if((TYPE = Parse_additive_operator()) == ERROR) return ERROR;
@@ -678,6 +691,7 @@ int Parse_term(){
     while(token == TSTAR || token == TDIV || token == TAND){
 
         opr = token;
+        is_opr = 1;
         fprintf(output, "\tPUSH\t0,gr1\n");
 
         if((TYPE = Parse_multiplicative_operator()) == ERROR) return ERROR;
@@ -702,6 +716,9 @@ int Parse_factor(){
     switch(token){
         case TNAME:
             if((TYPE = Parse_variable()) == ERROR) return ERROR;
+            if(!(!is_opr && (is_formal || is_callp) && (token == TCOMMA || token == TRPAREN))){
+                fprintf(output, "\tLD\tgr1,0,gr1\n");
+            }
             break;
 
         case TNUMBER:
@@ -712,8 +729,9 @@ int Parse_factor(){
             break;
 
         case TLPAREN:
-            token = scan();
+            is_opr = 1;
 
+            token = scan();
             if((TYPE = Parse_expression()) == ERROR) return ERROR;
             if(token != TRPAREN) return error("parentheses is not found in factor");
 
@@ -721,23 +739,28 @@ int Parse_factor(){
             break;
 
         case TNOT:
+            is_opr = 1;
             token = scan();
             if((TYPE = Parse_factor()) == ERROR) return ERROR;
             if(TYPE != TPBOOL) return error("expect boolean type after [not] statement");
+            fprintf(output, "\tLAD\tgr2,1\n");
+            fprintf(output, "\tXOR\tgr1,gr2\n");
             break;
 
         case TINTEGER:
         case TBOOLEAN:
         case TCHAR:
+            is_opr = 1;
             if((TYPE = Parse_standard_type()) == ERROR) return ERROR;
             if(token != TLPAREN) return error("left parentheses is not found in factor");
             token = scan();
             
             if((TYPE_expression = Parse_expression()) == ERROR) return ERROR;
             if(token != TRPAREN) return error("right parentheses is not found in factor");
-
             if(Check_Standard_Type(TYPE_expression) == ERROR) return error("type of expression is expected integer or boolean or char in factor statement");
             
+            if(inst_factor_char(TYPE, TYPE_expression) == ERROR) return ERROR;
+
             token = scan();
             break;
 
@@ -927,8 +950,6 @@ int Parse_empty_statement(){
     Case : type isn't belong to standard -> return ERROR
 */
 static int Check_Standard_Type(int TYPE){
-    
     if(TYPE == TPINT || TYPE == TPBOOL || TYPE == TPCHAR ) return NORMAL;
     else return ERROR;
-
 }

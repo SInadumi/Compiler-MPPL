@@ -269,5 +269,6 @@ extern int inst_expression(int opr);
 extern void inst_minus();
 extern void inst_simple_expression(int opr);
 extern void inst_term(int opr);
+extern int inst_factor_char(int type, int exp_type);
 extern void INSTRUCTIONS();
 #endif

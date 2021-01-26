@@ -165,6 +165,7 @@ int inst_variable(struct ID *p, int point_to_array){
         fprintf(output, "\tADDA\tgr1,gr2\n");
         return NORMAL;
     }
+    //　バグ
     if(p->ispara == FORMAL_PARAM){
         fprintf(output, "\tLD\tgr1,$%s%%%s\n", p->name, p->procname);
     }else{
@@ -264,6 +265,68 @@ void inst_term(int opr){
         default:
             break;
     }
+}
+
+int inst_factor_char(int type, int exp_type){
+    char *label = NULL;
+    switch(exp_type){
+        case TPINT:
+            switch(type){
+                case TPINT:
+                    break;
+                case TPBOOL:
+                    if(create_label(&label) == ERROR) return ERROR;
+                    fprintf(output, "\tCPA\tgr1, gr0\n");
+                    fprintf(output, "\tJZE\t%s\n", label);
+                    fprintf(output, "\tLAD\tgr1,1\n");
+                    fprintf(output, "%s\n", label);
+                    break;
+                case TPCHAR:
+                    fprintf(output, "\tLAD\tgr2,127\n");
+                    fprintf(output, "\tAND\tgr1,gr2\n");
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case TPCHAR:
+            switch(type){
+                case TPINT:
+                    break;
+                case TPBOOL:
+                    if(create_label(&label) == ERROR) return ERROR;
+                    fprintf(output, "\tCPA\tgr1,gr0\n");
+                    fprintf(output, "\tJZE\t%s\n", label);
+                    fprintf(output, "\tLAD\tgr1,1\n");
+                    fprintf(output, "%s\n", label);
+                    break;
+                case TPCHAR:
+                    break;
+                default:
+                    break;
+            }
+            break;
+        case TPBOOL:
+            switch(type){
+                case TPINT:
+                    break;
+                case TPBOOL:
+                    break;
+                case TPCHAR:
+                    if(create_label(&label) == ERROR) return ERROR;
+                    fprintf(output, "\tCPA\tgr1,gr0");
+                    fprintf(output, "\tJZE\t%s\n", label);
+                    fprintf(output, "\tLAD\tgr1,1\n");
+                    fprintf(output, "%s\n", label);
+                    break;
+                default:
+                    break;
+            }
+            break;
+        default:
+            break;
+    }
+    return NORMAL;
 }
 
 /* Instruction CASL2 */
