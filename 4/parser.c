@@ -498,22 +498,27 @@ int Parse_expressions(struct TYPE *fparams){
 
     int TYPE = ERROR;
     struct TYPE *tfparams = fparams;
+    int opr = token;
     is_opr = 0;
 
     if((TYPE = Parse_expression()) == ERROR) return ERROR;
     if(tfparams == NULL) return error("number of formal and expression is not matched");
     if(TYPE != tfparams->ttype) return error("type of formal and expression is not matched");
 
+    if(inst_expressions(opr, is_opr) == ERROR) return ERROR;
     
     while(token == TCOMMA){
         token = scan();
-        
+        opr = token;
         tfparams = tfparams->paratp;
         is_opr = 0;
 
         if((TYPE = Parse_expression()) == ERROR) return ERROR;
         if(tfparams == NULL) return error("number of formal and expression is not matched");
         if(TYPE != tfparams->ttype) return error("type of formal and expression is not matched");
+
+        if(inst_expressions(opr, is_opr) == ERROR) return ERROR;
+
     }
 
     return NORMAL;

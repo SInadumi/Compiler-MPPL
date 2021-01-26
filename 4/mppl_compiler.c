@@ -173,6 +173,23 @@ int inst_variable(struct ID *p, int point_to_array){
     }
     return NORMAL;
 }
+
+int inst_expressions(int opr, int is_opr){
+    // 実引数である式が左辺値を持たないときには，主記憶中に場所を取り，そこに式の値を
+    // 置いてその場所の番地を渡す．手続きの呼び出しが終わるとその場所は再利用してよい．
+    char *label = NULL;
+    if(opr == TNAME && is_opr){
+        fprintf(output, "\tPUSH\t0,gr1\n");
+    }else{
+        if(create_label(&label) == ERROR) return ERROR;
+        fprintf(output, "\tLAD\tgr2,%s\n", label);
+        fprintf(output, "\tST\tgr1,0,gr2\n");
+        fprintf(output, "\tPUSH\t0,gr2\n");
+        register_strlabel(label, "");
+    }
+    return NORMAL;
+}
+
 int inst_expression(int opr){
     char *label_t = NULL, *label_f = NULL;
 
