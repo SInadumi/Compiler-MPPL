@@ -70,7 +70,7 @@ int register_strlabel(char *label, char *str){
     if((p = (struct SLABEL *)malloc(sizeof(struct SLABEL))) == NULL){
         return error("cannot malloc in register strlabel");
     }
-    snprintf(p->str, MAXSTRSIZE, "%s\tDC\t'%s'\n", label, str);
+    snprintf(p->str, MAXSTRSIZE, "%s\tDC\t%s\n", label, str);
     p->nextp = NULL;
     if(strlabelroot == NULL){
         strlabelroot = p;
@@ -112,11 +112,13 @@ void inst_procedule_params(struct PARAM *para){
 
 int inst_write_string(char *str){
     char *label;
+    char t_str[MAXSTRSIZE];
     if(create_label(&label) == ERROR) return ERROR;
     fprintf(output, "\tLAD\tgr1,%s\n",label);
     fprintf(output, "\tLD\tgr2,gr0\n");
     fprintf(output, "\tCALL\tWRITESTR\n");
-    if(register_strlabel(label, str) == ERROR) return ERROR;
+    snprintf(t_str, MAXSTRSIZE, "'%s'", str);
+    if(register_strlabel(label, t_str) == ERROR) return ERROR;
     return NORMAL;
 }
 
@@ -182,14 +184,14 @@ int inst_expressions(int opr, int is_opr){
     // 実引数である式が左辺値を持たないときには，主記憶中に場所を取り，そこに式の値を
     // 置いてその場所の番地を渡す．手続きの呼び出しが終わるとその場所は再利用してよい．
     char *label = NULL;
-    if(opr == TNAME && is_opr){
+    if(opr == TNAME && is_opr == 0){
         fprintf(output, "\tPUSH\t0,gr1\n");
     }else{
         if(create_label(&label) == ERROR) return ERROR;
         fprintf(output, "\tLAD\tgr2,%s\n", label);
         fprintf(output, "\tST\tgr1,0,gr2\n");
         fprintf(output, "\tPUSH\t0,gr2\n");
-        register_strlabel(label, "");
+        register_strlabel(label, "0");
     }
     return NORMAL;
 }

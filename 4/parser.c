@@ -19,7 +19,7 @@ static char *label_exit;
 static int is_opr = 0;
 static int is_formal = 0;
 static int is_callp = 0;
-static int is_subproc = 0;
+static int is_subproc = NOT_FORMAL_PARAM;
 static struct ID *ref_id = NULL;
 
 static int Check_Standard_Type(int TYPE);
@@ -103,7 +103,7 @@ int Parse_variable_declaration(){
     if(Parse_type() == ERROR) return ERROR;
 
     // register ID(globalidroot)
-    if(define_identifer(NOT_FORMAL_PARAM, is_global) == ERROR) return ERROR;
+    if(define_identifer(is_subproc, is_global) == ERROR) return ERROR;
 
 
     if (token != TSEMI) return error("Semicolon is not found in variable declaration statement");
@@ -121,7 +121,7 @@ int Parse_variable_declaration(){
         if(Parse_type() == ERROR) return ERROR;
 
         /* register ID(glbalidroot) */
-        if(define_identifer(NOT_FORMAL_PARAM, is_global) == ERROR) return ERROR;
+        if(define_identifer(is_subproc, is_global) == ERROR) return ERROR;
 
         if (token != TSEMI) return error("Semicolon is not found in variable declaration statement");
         token = scan();
@@ -218,7 +218,7 @@ int Parse_array_type(){
 int Parse_subprogram_declaration(){
 
     struct PARAM *param = NULL;
-    is_subproc = 1;
+    is_subproc = FORMAL_PARAM;
 
     /* initialize localidtab */
     init_local_idtab();
@@ -258,7 +258,7 @@ int Parse_subprogram_declaration(){
 
     /* write 'RET' in output */
     fprintf(output, "\tRET\n");
-    is_subproc = 0;
+    is_subproc = NOT_FORMAL_PARAM;
 
     return NORMAL;
 }
@@ -288,7 +288,7 @@ int Parse_formal_parameters(){
     if(Check_Standard_Type(TYPE) == ERROR) return error("type is expected integer or boolean or char in formal parameter");
     
     /* register ID(localidroot) */
-    if(define_identifer(FORMAL_PARAM, is_global) == ERROR) return ERROR;
+    if(define_identifer(is_subproc, is_global) == ERROR) return ERROR;
 
     while(token == TSEMI){
         token = scan();
@@ -302,7 +302,7 @@ int Parse_formal_parameters(){
         if(Check_Standard_Type(TYPE) == ERROR) return error("type is expected integer or boolean or char in formal parameter");
         
         /* register ID(localidroot) */
-        if(define_identifer(FORMAL_PARAM, is_global) == ERROR) return ERROR;
+        if(define_identifer(is_subproc, is_global) == ERROR) return ERROR;
 
     }
 
@@ -548,7 +548,9 @@ int Parse_assignment_statement(){
 
     if(token != TASSIGN) return error("':=' is not found in assign statement");
     token = scan();
-
+    if(is_subproc == FORMAL_PARAM && ref_id->ispara == FORMAL_PARAM){
+        fprintf(output, "\tPUSH\t0,gr1\n");
+    }
     if((TYPE_expression = Parse_expression()) == ERROR) return ERROR;
     if(Check_Standard_Type(TYPE_expression) == ERROR) return error("Type of expression is expected integer or boolean or char in assignment statement");
     
