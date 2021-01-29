@@ -70,7 +70,7 @@ int register_strlabel(char *label, char *str){
     if((p = (struct SLABEL *)malloc(sizeof(struct SLABEL))) == NULL){
         return error("cannot malloc in register strlabel");
     }
-    snprintf(p->str, MAXSTRSIZE, "%s\tDC\t%s\n", label, str);
+    snprintf(p->str, MAXSTRSIZE, "%s\tDC\t'%s'\n", label, str);
     p->nextp = NULL;
     if(strlabelroot == NULL){
         strlabelroot = p;
@@ -101,7 +101,11 @@ void inst_procedule_params(struct PARAM *para){
     fprintf(output, "\tPOP\tgr2\n");
     for(p = para; p != NULL; p = p->nextp){
         fprintf(output, "\tPOP\tgr1\n");
-        fprintf(output, "\tST\tgr1,$%s%%%s\n", p->now->name, p->now->procname);
+        if(p->now->procname != NULL){
+            fprintf(output, "\tST\tgr1,$%s%%%s\n", p->now->name, p->now->procname);
+        }else{
+            fprintf(output, "\tST\tgr1,$%s\n", p->now->name);
+        }
     }
     fprintf(output, "\tPUSH\t0,gr2\n");
 }
@@ -166,11 +170,11 @@ int inst_variable(struct ID *p, int point_to_array){
         return NORMAL;
     }
     //　バグ
-    if(p->ispara == FORMAL_PARAM){
-        fprintf(output, "\tLD\tgr1,$%s%%%s\n", p->name, p->procname);
-    }else{
-        fprintf(output, "\tLAD\tgr1,$%s%%%s\n", p->name, p->procname);
-    }
+    if(p->ispara == FORMAL_PARAM) fprintf(output, "\tLD\tgr1,");
+    else fprintf(output, "\tLAD\tgr1,");
+    if(p->procname != NULL) fprintf(output, "$%s%%%s\n", p->name, p->procname);
+    else fprintf(output, "$%s\n", p->name);
+
     return NORMAL;
 }
 
@@ -249,7 +253,7 @@ void inst_simple_expression(int opr){
     switch(opr){
         case TPLUS:
             fprintf(output, "\tADDA\tgr1,gr2\n");
-            fprintf(output, "\tJOV\tEOVF");
+            fprintf(output, "\tJOV\tEOVF\n");
             break;
         case TMINUS:
             fprintf(output, "\tSUBA\tgr2,gr1\n");
@@ -393,13 +397,13 @@ void INSTRUCTIONS(){
     fprintf(output, "\tJUMP\tWC1\n");
     fprintf(output, "WC2\n");
     fprintf(output, "\tST\tgr1,OBUF,gr7\n");
-    fprintf(output, "\tCALL\tOBUFCHECK\n");
-    fprintf(output, "\tST\tgr7,OBUFSIZE");
+    fprintf(output, "\tCALL\tBOVFCHECK\n");
+    fprintf(output, "\tST\tgr7,OBUFSIZE\n");
     fprintf(output, "\tRPOP\n");
     fprintf(output, "\tRET\n");
     // #define WRITESTR 208
     fprintf(output, "WRITESTR\n");
-    fprintf(output, "\tPRUSH\n");
+    fprintf(output, "\tRPUSH\n");
     fprintf(output, "\tLD\tgr6,gr1\n");
     fprintf(output, "WS1\n");
     fprintf(output, "\tLD\tgr4,0,gr6\n");
@@ -495,7 +499,7 @@ void INSTRUCTIONS(){
     fprintf(output, "\tRET\n");
 
     // MMINT 212
-    fprintf(output, "\tMMINT\tDC\t'-32768'");
+    fprintf(output, "MMINT\tDC\t'-32768'\n");
 
     // WRITEBOOL 213
     fprintf(output, "WRITEBOOL\n");
@@ -512,7 +516,7 @@ void INSTRUCTIONS(){
     fprintf(output, "\tRET\n");
 
     // WBTRUE 214
-    fprintf(output, "WBTRUE\tDC 'TRUE\n");
+    fprintf(output, "WBTRUE\tDC 'TRUE'\n");
     // WBFALSE 215
     fprintf(output, "WBFALSE\tDC 'FALSE'\n");
     // WRITELINE 216
@@ -571,7 +575,7 @@ void INSTRUCTIONS(){
     // READINT 219
     fprintf(output, "READINT\n");
     fprintf(output, "\tRPUSH\n");
-    fprintf(output, "\tRI1\n");
+    fprintf(output, "RI1\n");
     fprintf(output, "\tCALL\tREADCHAR\n");
     fprintf(output, "\tLD\tgr7,0,gr1\n");
     fprintf(output, "\tCPA\tgr7,SPACE\n");
@@ -606,7 +610,7 @@ void INSTRUCTIONS(){
     fprintf(output, "\tJNZ\tRI5\n");
     fprintf(output, "\tSUBA\tgr5,gr6\n");
     fprintf(output, "\tST\tgr5,0,gr1\n");
-    fprintf(output, "\tRI5\n");
+    fprintf(output, "RI5\n");
     fprintf(output, "\tRPOP\n");
     fprintf(output, "\tRET\n");
 
@@ -646,7 +650,7 @@ void INSTRUCTIONS(){
     //OBUF 234
     fprintf(output, "OBUF\tDS\t257\n");
     // IBUF 235
-    fprintf(output, "IBUDF\tS\t257\n");
+    fprintf(output, "IBUF\tDS\t257\n");
     // RPBBUF 236
     fprintf(output, "RPBBUF\tDC\t0\n");
 }

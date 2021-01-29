@@ -315,7 +315,6 @@ FL1
   RPOP
   RET
 READCHAR
-; gr1���w���Ԓn�ɕ������ǂݍ���
   RPUSH
   LD  gr5, RPBBUF  ; if(RPBBUF != '\0') {
   JZE  RC0
@@ -346,12 +345,11 @@ RC3      ; }
   RPOP
   RET
 READINT
-; gr1���w���Ԓn�ɐ����l���ǂݍ���
   RPUSH
 RI1      ; do {
   CALL  READCHAR  ;  ch = READCHAR();
   LD  gr7, 0,gr1
-  CPA  gr7, SPACE  ; } while(ch == ' ' || ch == '\t' || ch == '\n');
+  CPA  gr7, SPACE
   JZE  RI1
   CPA  gr7, TAB
   JZE  RI1
@@ -366,7 +364,7 @@ RI1      ; do {
 RI4      ; }
   LD  gr6, gr0  ; v = 0;
 RI2
-  CPA  gr7, ZERO  ; while('0' <= ch && ch <= '9') {
+  CPA  gr7, ZERO  
   JMI  RI3
   CPA  gr7, NINE
   JPL  RI3
@@ -387,7 +385,6 @@ RI5      ; }
   RPOP
   RET
 READLINE
-; ���͂����s�R�[�h�܂Łi���s�R�[�h���܂ށj�ǂݔ�΂�
   ST  gr0, IBUFSIZE
   ST  gr0, INP
   ST  gr0, RPBBUF

@@ -552,7 +552,7 @@ int Parse_assignment_statement(){
 
     // スタックトップ->式の値，一段下に左辺値
     fprintf(output, "\tPOP\tgr2\n");
-    fprintf(output, "ST\tgr1,0,gr2\n");
+    fprintf(output, "\tST\tgr1,0,gr2\n");
 
     return NORMAL;
 }
@@ -785,7 +785,7 @@ int Parse_constant(){
         fprintf(output, "\tLAD\tgr1,%d\n", num_attr);
         TYPE = TPINT;
     }else if(token == TFALSE){
-        fprintf(output, "\tLAD\tgr1,0\n");
+        fprintf(output, "\tLD\tgr1,gr0\n");
         TYPE = TPBOOL;
     }else if(token == TTRUE){
         fprintf(output, "\tLAD\tgr1,1\n");
