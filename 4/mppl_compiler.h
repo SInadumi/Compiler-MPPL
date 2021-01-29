@@ -264,6 +264,7 @@ extern void inst_procedule_params(struct PARAM *params);
 extern int inst_write_string();
 extern int inst_write_value(int type, int nums);
 extern void inst_read(int type);
+extern void inst_assignment(int is_subproc, struct ID *ref_id);
 extern int inst_variable(struct ID *p, int point_to_array);
 extern int inst_expressions(int opr, int is_opr);
 extern int inst_expression(int opr);

@@ -19,6 +19,8 @@ static char *label_exit;
 static int is_opr = 0;
 static int is_formal = 0;
 static int is_callp = 0;
+static int is_subproc = 0;
+static struct ID *ref_id = NULL;
 
 static int Check_Standard_Type(int TYPE);
 
@@ -216,6 +218,7 @@ int Parse_array_type(){
 int Parse_subprogram_declaration(){
 
     struct PARAM *param = NULL;
+    is_subproc = 1;
 
     /* initialize localidtab */
     init_local_idtab();
@@ -255,6 +258,7 @@ int Parse_subprogram_declaration(){
 
     /* write 'RET' in output */
     fprintf(output, "\tRET\n");
+    is_subproc = 0;
 
     return NORMAL;
 }
@@ -550,10 +554,8 @@ int Parse_assignment_statement(){
     
     if(TYPE_left_part != TYPE_expression) return error("Type of LEFT_PART and EXPRESSION should be equal");
 
-    // スタックトップ->式の値，一段下に左辺値
-    fprintf(output, "\tPOP\tgr2\n");
-    fprintf(output, "\tST\tgr1,0,gr2\n");
-
+    inst_assignment(is_subproc, ref_id);
+    
     return NORMAL;
 }
 
@@ -579,6 +581,7 @@ int Parse_variable(){
     }else{
         if((p = search_global_idtab((char *)string_attr)) == NULL) return error("%s is not found", string_attr);
     }
+    ref_id = p;
     TYPE = p->itp->ttype;
 
     if(Parse_variable_name() == ERROR) return ERROR;

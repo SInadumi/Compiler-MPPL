@@ -169,7 +169,7 @@ int inst_variable(struct ID *p, int point_to_array){
         fprintf(output, "\tADDA\tgr1,gr2\n");
         return NORMAL;
     }
-    //　バグ
+
     if(p->ispara == FORMAL_PARAM) fprintf(output, "\tLD\tgr1,");
     else fprintf(output, "\tLAD\tgr1,");
     if(p->procname != NULL) fprintf(output, "$%s%%%s\n", p->name, p->procname);
@@ -192,6 +192,25 @@ int inst_expressions(int opr, int is_opr){
         register_strlabel(label, "");
     }
     return NORMAL;
+}
+
+void inst_assignment(int is_subproc, struct ID *ref_id){
+    if(ref_id->ispara == FORMAL_PARAM && is_subproc == 1){
+        fprintf(output, "\tPOP\tgr2\n");
+        fprintf(output, "\tST\tgr1,0,gr2\n");
+    }else{
+        if(ref_id->itp->ttype == TPARRAY){
+            fprintf(output, "\tPOP\tgr2\n");
+        }
+        fprintf(output, "\tST\tgr1,$%s", ref_id->name);
+        if(ref_id->procname != NULL){
+            fprintf(output, "%%%s",ref_id->procname);
+        }
+        if(ref_id->itp->ttype == TPARRAY){
+            fprintf(output, ",gr2");
+        }
+        fprintf(output, "\n");
+    }
 }
 
 int inst_expression(int opr){
