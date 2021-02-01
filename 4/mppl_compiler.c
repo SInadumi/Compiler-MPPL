@@ -161,11 +161,11 @@ int inst_variable(struct ID *p, int point_to_array){
         if(create_label(&label) == ERROR) return ERROR;
         // gr2 -> 配列の要素
         fprintf(output, "\tCPA\tgr2,gr0\n");
-        fprintf(output, "JMI\tEROV\n");
-        fprintf(output, "LAD\tgr1,%d\n", p->itp->arraysize);
-        fprintf(output, "CPA\tgr2,gr1\n");
-        fprintf(output, "JMI\t%s\n", label);
-        fprintf(output, "JUMP\tEROV\n");
+        fprintf(output, "\tJMI\tEROV\n");
+        fprintf(output, "\tLAD\tgr1,%d\n", p->itp->arraysize);
+        fprintf(output, "\tCPA\tgr2,gr1\n");
+        fprintf(output, "\tJMI\t%s\n", label);
+        fprintf(output, "\tJUMP\tEROV\n");
         fprintf(output, "%s\n", label);
         fprintf(output, "\tPOP\tgr2\n");
         fprintf(output, "\tADDA\tgr1,gr2\n");

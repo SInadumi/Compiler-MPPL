@@ -14,14 +14,15 @@ char *tokenstr[NUMOFTOKEN+1] = {
 static int is_empty = 0;    // Does Exist empty statement
 static int is_iterate = 0;  // Judge whether this is scanning of iteration statement or not
 static int token = 0;       // Token code Buffer
+/* cxref.c, compiler.c */
 static int is_global = GLOBAL_PARAM;
 static char *label_exit;
 static int is_opr = 0;
 static int is_formal = 0;
 static int is_callp = 0;
 static int is_subproc = NOT_FORMAL_PARAM;
+static int is_left_val = 0;
 static struct ID *ref_id = NULL;
-
 static int Check_Standard_Type(int TYPE);
 
 int Parse_program(){
@@ -563,7 +564,9 @@ int Parse_assignment_statement(){
 
 int Parse_left_part(){
     int TYPE = ERROR;
+    is_left_val = 1;
     if((TYPE = Parse_variable()) == ERROR) return ERROR;
+    is_left_val = 0;
 
     return TYPE;
 }
@@ -583,7 +586,7 @@ int Parse_variable(){
     }else{
         if((p = search_global_idtab((char *)string_attr)) == NULL) return error("%s is not found", string_attr);
     }
-    ref_id = p;
+    if(is_left_val) ref_id = p;
     TYPE = p->itp->ttype;
 
     if(Parse_variable_name() == ERROR) return ERROR;
@@ -872,6 +875,7 @@ int Parse_input_statement(){
             if(TYPE != TPINT && TYPE != TPCHAR){ 
                 return error("type of valiable statement is expected char or integer in input statement");
             }
+            inst_read(TYPE);
         }
 
         if(token != TRPAREN) return error("expect parentheses in input statement");

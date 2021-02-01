@@ -219,9 +219,9 @@ int define_identifer(int is_formal, int is_global){
         p->irefp = t_irefp;
 
         if(is_global){
-            globalidroot = refacter_to_lexicographical(globalidroot, p);
+            globalidroot = refactor_to_lexicographical(globalidroot, p);
         }else{
-            localidroot = refacter_to_lexicographical(localidroot, p);
+            localidroot = refactor_to_lexicographical(localidroot, p);
         }
 
         /* write ID labels in output */
@@ -267,7 +267,7 @@ int compare_names(const void *p, const void *q){
     // p->name < q->name then minus num 
     return (strcmp(((struct ID *)p)->name, ((struct ID *)q)->name));
 }
-struct ID *refacter_to_lexicographical(struct ID *to, struct ID *from){
+struct ID *refactor_to_lexicographical(struct ID *to, struct ID *from){
     struct ID *temp = NULL, *head, *p, *q;
 
     if(to == NULL){
@@ -432,7 +432,7 @@ void release_global_idtab(){
 
 void relocate_local_idtab(){
     
-    globalidroot = refacter_to_lexicographical(globalidroot, localidroot);
+    globalidroot = refactor_to_lexicographical(globalidroot, localidroot);
 
     if(paratp_root != NULL){
         if(paratp_root->etp != NULL) free(paratp_root->etp);
